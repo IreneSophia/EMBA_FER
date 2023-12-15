@@ -8,7 +8,7 @@
 %
 % (c) Irene Sophia Plank 10planki@gmail.com
 
-function FER_preproET(filename, dir_path)
+function preproET_FER(filename, dir_path)
 
 %% read in data and calculate values
 
