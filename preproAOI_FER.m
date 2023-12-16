@@ -1,3 +1,7 @@
+% This script takes OpenFace data and creates 3D matrices containing areas
+% of interest: eye, forehead, mouth and nose region. 
+% (c) I.S. Plank, 10plankp@gmail.com
+
 % clear everything
 clearvars;
 
@@ -169,8 +173,8 @@ for j = 1:length(ls_files)
         mtx  = mtx + mtxt; 
     
         % deal with possible overlaps
-        mtx(mtx == (0.88 + 0.81)) = 0.81; % forehead + eye = eye region
-        mtx(mtx == (0.84 + 0.86)) = 0.84; % nose + mouth = mouth region
+        mtx((mtx == (0.88 + 0.81)) | (mtx == (0.86 + 0.81))) = 0.81; % forehead/nose + eye > eye region
+        mtx(mtx == (0.84 + 0.86)) = 0.84; % nose + mouth > mouth region
     
         % if there are still overlaps, throw an error
         if max(mtx, [], 'all') > 1
@@ -184,7 +188,7 @@ for j = 1:length(ls_files)
         mtx_size(i,4) = sum(mtx(:) == 0.88);
     
         % add the matrix to the larger aoi matrix
-        mtx_aois(:,:,i) = rot90(mtx,2);
+        mtx_aois(:,:,i) = flip(mtx); % needs to be flipped first
     
     end
     
