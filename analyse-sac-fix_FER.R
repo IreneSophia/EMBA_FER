@@ -26,10 +26,10 @@ df.fix = list.files(path = dt.path, pattern = "FER-ET.*_fixations_AOI.csv", full
 
 # merge with behavioural data
 df.fix = merge(df.fix, df.beh, all.x = T) %>%
-  # standardise by number of pictures they saw
+  # how many would it be if they had seen all frames
   mutate(
-    fix.dur = fix.dur / frames
-  )
+    fix.dur = fix.dur * 300 / frames
+  ) %>% filter(!is.na(fix.dur))
 
 # visualise the distribution
 ggplot(data = df.fix, aes(x = fix.dur)) +
@@ -57,7 +57,7 @@ df.sac = merge(df.sac, df.beh, all.x = T) %>%
   # how many would it be if they had seen all frames
   mutate(
     n.sac = (n.sac*300) / frames
-  )
+  ) %>% filter(!is.na(n.sac))
 
 # visualise the distribution
 ggplot(data = df.sac, aes(x = n.sac)) +
