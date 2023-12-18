@@ -80,14 +80,16 @@ for j = 1:length(ls_files)
             % that
             x   = round((tbl_fix.meanX_pix(i) - 718)/2);
             y   = round((tbl_fix.meanY_pix(i) - 38)/2);
-            if mtx_aois(y, x, fno) == 0.81
-                tbl_fix.AOI(i) = "eyes";
-            elseif mtx_aois(y, x, fno) == 0.82
-                tbl_fix.AOI(i) = "mouth";
-            elseif mtx_aois(y, x, fno) == 0.84
-                tbl_fix.AOI(i) = "nose";
-            elseif mtx_aois(y, x, fno) == 0.86
-                tbl_fix.AOI(i) = "fore";
+            if x >= 1 && x <= size(mtx_aois,2) && y >= 1 && y <= size(mtx_aois,1)
+                if mtx_aois(y, x, fno) == 0.81
+                    tbl_fix.AOI(i) = "eyes";
+                elseif mtx_aois(y, x, fno) == 0.82
+                    tbl_fix.AOI(i) = "mouth";
+                elseif mtx_aois(y, x, fno) == 0.84
+                    tbl_fix.AOI(i) = "nose";
+                elseif mtx_aois(y, x, fno) == 0.86
+                    tbl_fix.AOI(i) = "fore";
+                end
             end
         end
     
