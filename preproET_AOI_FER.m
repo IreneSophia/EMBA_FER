@@ -8,8 +8,8 @@
 clearvars;
 
 % specify directories with filesep at the end
-dir_in  = [pwd filesep];
-dir_vid = 'C:\Users\Oswin\Documents\EMBA_covid\VidStimProcessed\';
+dir_in  = ['/home/emba/Documents/EMBA/BVET' filesep];
+dir_vid = ['/home/emba/Documents/EMBA/VidStimProcessed' filesep];
 
 % get a list of the files
 ls_files = dir(dir_in + "FER-ET*_fixations.csv");
