@@ -3,6 +3,10 @@ library(tidyverse)
 fl.path = '/home/emba/Documents/EMBA'
 dt.path = paste(fl.path, 'BVET', sep = "/")
 
+# load the behavioural data -----------------------------------------------
+
+df.beh = readRDS(paste(dt.path, "df_FER.RDS", sep = "/"))
+
 # fixation analysis -------------------------------------------------------
 
 # load the relevant fixation data in long format
@@ -17,11 +21,19 @@ df.fix = list.files(path = dt.path, pattern = "FER-ET.*_fixations_AOI.csv", full
   summarise(
     n = n(),
     fix.dur = median(duration)
+  ) %>%
+  rename("trl" = "on_trialNo")
+
+# merge with behavioural data
+df.fix = merge(df.fix, df.beh, all.x = T) %>%
+  # standardise by number of pictures they saw
+  mutate(
+    fix.dur = fix.dur / frames
   )
 
 # visualise the distribution
-ggplot(data = df.fix, aes(x = fix.dur, fill = AOI)) +
-  geom_density(alpha = .3, colour = "lightgrey") + 
+ggplot(data = df.fix, aes(x = fix.dur)) +
+  geom_density(alpha = .3, colour = "lightgrey", fill = "lightblue") + 
   theme_bw()
 
 # saccade analysis --------------------------------------------------------
@@ -35,9 +47,19 @@ df.sac = list.files(path = dt.path, pattern = "FER-ET.*_saccades_AOI.csv", full.
   ) %>% 
   filter(on_AOI != off_AOI) %>% 
   group_by(subID, on_trialNo) %>%
-  count()
+  summarise(
+    n.sac = n()
+  ) %>%
+  rename("trl" = "on_trialNo")
+
+# merge with behavioural data
+df.sac = merge(df.sac, df.beh, all.x = T) %>%
+  # how many would it be if they had seen all frames
+  mutate(
+    n.sac = (n.sac*300) / frames
+  )
 
 # visualise the distribution
-ggplot(data = df.sac, aes(x = n)) +
+ggplot(data = df.sac, aes(x = n.sac)) +
   geom_density(alpha = .3, colour = "lightgrey", fill = "lightblue") + 
   theme_bw()
