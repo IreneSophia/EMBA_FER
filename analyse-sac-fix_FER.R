@@ -63,3 +63,7 @@ df.sac = merge(df.sac, df.beh, all.x = T) %>%
 ggplot(data = df.sac, aes(x = n.sac)) +
   geom_density(alpha = .3, colour = "lightgrey", fill = "lightblue") + 
   theme_bw()
+
+# save the data for analysis
+save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac"))
+
