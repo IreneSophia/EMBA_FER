@@ -32,48 +32,46 @@ knitr::opts_knit$set(root.dir = dt.path)
 df.fer = list.files(path = dt.path, pattern = "FER-BV_*", full.names = T) %>%
   map_df(~read_csv(., show_col_types = F, col_types = "cdcdddc")) %>% 
   mutate(
-    lastkey = as.numeric(lastkey)
-  ) %>% 
-  mutate(acc = emo == opt,
-         emo = as.factor(emo),
-         emo = recode_factor(emo, 
-                "1" = "AF",
-                "2" = "AN",
-                "3" = "HA",
-                "4" = "SA"),
-         opt = as.factor(opt),
-         opt = recode_factor(opt, 
-                "1" = "AF",
-                "2" = "AN",
-                "3" = "HA",
-                "4" = "SA"), 
-         disc = case_when(
-           acc ~ disc
-         )) %>%
-  select(subID, video, emo, disc, acc)
+    lastkey = as.numeric(lastkey),
+    acc = emo == opt,
+    emo = as.factor(emo),
+    emo = recode_factor(emo, 
+           "1" = "AF",
+           "2" = "AN",
+           "3" = "HA",
+           "4" = "SA"),
+    opt = as.factor(opt),
+    opt = recode_factor(opt, 
+           "1" = "AF",
+           "2" = "AN",
+           "3" = "HA",
+           "4" = "SA"),
+    frames = round(disc * 300), 
+    disc = case_when(acc ~ disc)
+    ) %>%
+  select(subID, trl, video, frames, emo, disc, acc)
 
 df.ctr = list.files(path = dt.path, pattern = "CTR-BV_*", full.names = T) %>%
   map_df(~read_csv(., show_col_types = F, col_types = "cdcdddc")) %>% 
   mutate(
-    lastkey = as.numeric(lastkey)
-  ) %>% 
-  mutate(acc = animal == opt,
-         animal = as.factor(animal),
-         animal = recode_factor(animal, 
-                "1" = "ape",
-                "2" = "dog",
-                "3" = "cat",
-                "4" = "lion"),
-         opt = as.factor(opt),
-         opt = recode_factor(opt, 
-                "1" = "ape",
-                "2" = "dog",
-                "3" = "cat",
-                "4" = "lion"), 
-         disc = case_when(
-           acc ~ disc
-         )) %>%
-  select(subID, video, animal, disc, acc)
+    lastkey = as.numeric(lastkey),
+    acc = animal == opt,
+    animal = as.factor(animal),
+    animal = recode_factor(animal, 
+           "1" = "ape",
+           "2" = "dog",
+           "3" = "cat",
+           "4" = "lion"),
+    opt = as.factor(opt),
+    opt = recode_factor(opt, 
+           "1" = "ape",
+           "2" = "dog",
+           "3" = "cat",
+           "4" = "lion"),
+    frames = round(disc * 300), 
+    disc = case_when(acc ~ disc)
+    ) %>%
+  select(subID, trl, video, frames, animal, disc, acc)
 
 # aggregate date per participant
 df.fer_agg = df.fer %>% 
