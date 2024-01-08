@@ -38,7 +38,7 @@ ggplot(data = df.fix, aes(x = fix.dur)) +
 
 # saccade analysis --------------------------------------------------------
 
-# load the relevant fixation data in long format
+# load the relevant saccade data in long format
 df.sac = list.files(path = dt.path, pattern = "FER-ET.*_saccades_AOI.csv", full.names = T) %>%
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
@@ -64,6 +64,33 @@ ggplot(data = df.sac, aes(x = n.sac)) +
   geom_density(alpha = .3, colour = "lightgrey", fill = "lightblue") + 
   theme_bw()
 
+# explorative: first 60 pictures ------------------------------------------
+
+# how many pics to consider
+num.pic = 60
+
+# load the relevant fixation data in long format
+df.fix.start = list.files(path = dt.path, pattern = "FER-ET.*_fixations_AOI.csv", full.names = T) %>%
+  setNames(nm = .) %>%
+  map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
+  mutate(
+    subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_fixations_AOI.csv", "", fln)),
+    off_trialStm = as.numeric(gsub("pic_", "", off_trialStm))
+  ) %>% 
+  filter(!is.na(AOI) & off_trialStm <= num.pic) %>% 
+  group_by(subID, AOI, on_trialNo) %>%
+  summarise(
+    n = n(),
+    fix.dur = median(duration)
+  ) %>%
+  rename("trl" = "on_trialNo")
+
+# merge with behavioural data and discard trials with less than 60 frames seen
+df.fix.start = merge(df.fix.start, df.beh) %>%
+  filter(frames >= 60)
+
+# Save --------------------------------------------------------------------
+
 # save the data for analysis
-save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac"))
+save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.fix.start"))
 
