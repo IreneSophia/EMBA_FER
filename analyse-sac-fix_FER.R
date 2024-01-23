@@ -112,6 +112,9 @@ df.fix.end = list.files(path = dt.path, pattern = "FER-ET.*_fixations_AOI.csv", 
          "pic_start" = "on_trialStm",
          "pic_end" = "off_trialStm")
 
+df.fix.end = merge(df.fix.end, df.beh, all = T) %>% 
+  filter(!is.na(AOI) & !is.na(frames))
+
 # Save --------------------------------------------------------------------
 
 # save the data for analysis
