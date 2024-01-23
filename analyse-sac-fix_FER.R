@@ -46,7 +46,8 @@ df.sac = list.files(path = dt.path, pattern = "FER-ET.*_saccades_AOI.csv", full.
     subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_saccades_AOI.csv", "", fln))
   ) %>% 
   filter(on_AOI != off_AOI) %>% 
-  group_by(subID, on_trialNo) %>%
+  mutate(AOI = as.factor(paste(on_AOI, off_AOI))) %>%
+  group_by(subID, on_trialNo, AOI) %>%
   summarise(
     n.sac = n()
   ) %>%
@@ -89,8 +90,30 @@ df.fix.start = list.files(path = dt.path, pattern = "FER-ET.*_fixations_AOI.csv"
 df.fix.start = merge(df.fix.start, df.beh) %>%
   filter(frames >= 60)
 
+
+# explorative: last fixation before decision ------------------------------
+
+df.fix.end = list.files(path = dt.path, pattern = "FER-ET.*_fixations_AOI.csv", full.names = T) %>%
+  setNames(nm = .) %>%
+  map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
+  mutate(
+    subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_fixations_AOI.csv", "", fln)),
+    off_trialStm = as.numeric(gsub("pic_", "", off_trialStm))
+  ) %>% 
+  filter(!is.na(AOI)) %>% 
+  group_by(subID, on_trialNo) %>%
+  mutate(
+    rown = row_number(),
+    last = max(rown)
+  ) %>% ungroup() %>%
+  filter(rown == last) %>%
+  select(subID, on_trialNo, on_trialStm, off_trialStm, AOI) %>%
+  rename("trl" = "on_trialNo",
+         "pic_start" = "on_trialStm",
+         "pic_end" = "off_trialStm")
+
 # Save --------------------------------------------------------------------
 
 # save the data for analysis
-save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.fix.start"))
+save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.fix.start", "df.fix.end"))
 
