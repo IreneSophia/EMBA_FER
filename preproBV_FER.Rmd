@@ -103,8 +103,8 @@ df.fer = df.fer %>% filter(!(subID %in% exc))
 df.ctr = df.ctr %>% filter(!(subID %in% exc))
 
 # save data frame
-saveRDS(df.fer, "df_FER.RDS")
-saveRDS(df.ctr, "df_CTR.RDS")
+saveRDS(df.fer, file.path(dt.path, "df_FER.RDS"))
+saveRDS(df.ctr, file.path(dt.path, "df_CTR.RDS"))
 
 # how many are still left
 length(unique(df.fer$subID))
