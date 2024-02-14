@@ -49,7 +49,7 @@ df.fer = list.files(path = dt.path, pattern = "FER-BV_*", full.names = T) %>%
     frames = round(disc * 300), 
     disc = case_when(acc ~ disc)
     ) %>%
-  select(subID, trl, video, frames, emo, disc, acc)
+  select(subID, trl, video, frames, emo, opt, disc, acc)
 
 df.ctr = list.files(path = dt.path, pattern = "CTR-BV_*", full.names = T) %>%
   map_df(~read_csv(., show_col_types = F, col_types = "cdcdddc")) %>% 
@@ -73,21 +73,6 @@ df.ctr = list.files(path = dt.path, pattern = "CTR-BV_*", full.names = T) %>%
     ) %>%
   select(subID, trl, video, frames, animal, disc, acc)
 
-# aggregate date per participant
-df.fer_agg = df.fer %>% 
-  group_by(subID, emo) %>%
-  summarise(
-    disc = mean(disc, na.rm = T),
-    acc = mean(acc)
-  )
-
-df.ctr_agg = df.ctr %>% 
-  group_by(subID, animal) %>%
-  summarise(
-    disc = mean(disc, na.rm = T),
-    acc = mean(acc)
-  )
-
 # who has to be excluded? 
 exc1 = df.fer %>% group_by(subID) %>% summarise(acc = mean(acc)) %>% filter(acc < 2/3)
 exc2 = df.ctr %>% group_by(subID) %>% summarise(acc = mean(acc)) %>% filter(acc < 2/3)
@@ -102,27 +87,38 @@ exc   = c(exc, pilot$subID)
 df.fer = df.fer %>% filter(!(subID %in% exc))
 df.ctr = df.ctr %>% filter(!(subID %in% exc))
 
-# save data frame
+# calculate bias index for each emotion based on SDT
+for (i in c("AN","AF","SA","HA")) {
+  df.temp = df.fer %>%
+    group_by(subID) %>%
+    summarise(
+      fal = sum(opt==i & emo!=i, na.rm=T),                             # false alarm
+      hit = sum(opt==i & emo==i, na.rm=T),                             # hit: correct answer
+      mis = sum(emo==i & opt!=i, na.rm=T) + sum(emo==i & is.na(opt)),  # miss
+      rej = sum(opt!=i & emo!=i, na.rm=T) + sum(emo!=i & is.na(opt))   # correct rejection
+    )
+  if (i != "AN") {
+    df.temp$emo = i
+    df.sd = rbind(df.sd,df.temp)
+  } else {
+    df.sd = df.temp
+    df.sd$emo = i
+  }
+}
+
+df.sd$bias  = df.sd$fal/(df.sd$fal + df.sd$rej)/(1 - (df.sd$hit/(df.sd$hit + df.sd$mis) - df.sd$fal/(df.sd$fal + df.sd$rej)))
+
+# merge with data
+df.fer = merge(df.fer, df.sd %>% select(subID, emo, bias)) %>%
+  mutate(
+    bias = if_else(is.na(bias),0,bias)
+  )
+
+# save data frames
 saveRDS(df.fer, file.path(dt.path, "df_FER.RDS"))
 saveRDS(df.ctr, file.path(dt.path, "df_CTR.RDS"))
 
 # how many are still left
 length(unique(df.fer$subID))
-
-```
-
-```{r plot_data, warning = F, message = F}
-
-ggplot(data=df.fer_agg, aes(group = emo, y = acc, colour = emo, x = emo)) +
-  geom_boxplot()
-
-ggplot(data=df.fer, aes(x = disc, fill = emo)) +
-  geom_density(alpha = 0.5, colour = "darkgrey")
-
-ggplot(data=df.ctr_agg, aes(group = animal, y = acc, colour = animal, x = animal)) +
-  geom_boxplot()
-
-ggplot(data=df.ctr, aes(x = disc, fill = animal)) +
-  geom_density(alpha = 0.5, colour = "darkgrey")
 
 ```
