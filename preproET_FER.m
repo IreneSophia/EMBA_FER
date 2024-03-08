@@ -58,17 +58,12 @@ else
     end
     
     % add another row at the end
-    if height(tbl)-idx(end,1) < 500
-        last = height(tbl)-idx(end,1);
-    else
-        last = 10;
-    end
-    idx(end+1,:) = idx(end,1)+last;
+    idx(end+1,:) = idx(end,1)+500;
     
     % create empty columns to be filled with information
-    tbl.trialNo   = strings(height(tbl),1);
-    tbl.trialStm  = strings(height(tbl),1);
-    tbl.trialEmo  = strings(height(tbl),1);
+    tbl.trialNo   = nan(height(tbl),1);
+    tbl.trialStm  = nan(height(tbl),1);
+    tbl.trialEmo  = nan(height(tbl),1);
     
     % loop through the trials and add the information from the comment: 
     % "trial", "pic", "emotion"
@@ -78,35 +73,35 @@ else
         if i == (size(idx,1)-1)
             last = idx(i,1) + 10; % if last pic at all, take 20ms
         elseif trl(i,2) ~= trl(i+1,2)
-            last = idx(i,1) + 10; % if yes, take 20ms
+            last = idx(i,1) + 10; % if not the same trial, take 20ms
         else
-            last = idx(i+1,1)-1;  % if no, take all until the next one
+            last = idx(i+1,1)-1;  % if no, take all until the next picture
         end
         % trial number
-        tbl.trialNo(idx(i,1):last)   = trl(i,2);
+        tbl.trialNo(idx(i,1):last)   = str2double(trl(i,2));
         % trial stimulus (exact pic)
-        tbl.trialStm(idx(i,1):last)  = trl(i,1)+"_"+trl(i,3);
+        tbl.trialStm(idx(i,1):last)  = str2double(trl(i,3));
         % trial emotion
-        tbl.trialEmo(idx(i,1):last)   = trl(i,4);
+        tbl.trialEmo(idx(i,1):last)  = str2double(trl(i,4));
     
     end
 
-end 
-
-% calculate 
-tbl.pupilDiameter = mean([tbl.leftPupilMajorAxis,tbl.leftPupilMinorAxis],2);
-tbl.tracked = bitget(tbl.trigger,14-3); 
-tbl.pupilDiameterRight = mean([tbl.rightPupilMajorAxis,tbl.rightPupilMinorAxis],2);
-tbl.trackedRight = bitget(tbl.trigger,15-3); 
+    % calculate 
+    tbl.pupilDiameter = mean([tbl.leftPupilMajorAxis,tbl.leftPupilMinorAxis],2);
+    tbl.tracked = bitget(tbl.trigger,14-3); 
+    tbl.pupilDiameterRight = mean([tbl.rightPupilMajorAxis,tbl.rightPupilMinorAxis],2);
+    tbl.trackedRight = bitget(tbl.trigger,15-3); 
+        
+    % format gaze directions as screen pixel coords for NH2010
+    tbl.xPixel = ((tbl.leftScreenX + tbl.rightScreenX)/2)*...
+        (screen_res(1)/(screen_size(1)*1000));
+    tbl.yPixel = ((tbl.leftScreenY + tbl.rightScreenY)/2)*...
+        (screen_res(2)/(screen_size(2)*1000));
     
-% format gaze directions as screen pixel coords for NH2010
-tbl.xPixel = ((tbl.leftScreenX + tbl.rightScreenX)/2)*...
-    (screen_res(1)/(screen_size(1)*1000));
-tbl.yPixel = ((tbl.leftScreenY + tbl.rightScreenY)/2)*...
-    (screen_res(2)/(screen_size(2)*1000));
+    % save the table
+    save([dir_path filesep subID '_tbl.mat'], 'tbl');
 
-% save the table
-save([dir_path filesep subID '_tbl.mat'], 'tbl');
+end 
 
 %% classification of events
 
