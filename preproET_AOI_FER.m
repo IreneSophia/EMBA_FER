@@ -74,7 +74,7 @@ for j = 1:length(ls_files)
                 load([dir_vid vid '.mat'])
             end
             % get the frame number
-            fno = str2double(tbl_fix.on_trialStm{i}(5:end));
+            fno = tbl_fix.on_trialStm(i);
             % get the correct indices: since the pictures are presented in the
             % middle of the screen twice their side, we need to account for
             % that
@@ -139,7 +139,7 @@ for j = 1:length(ls_files)
             load([dir_vid vid '.mat'])
         end
         % get the frame number
-        fno = str2double(tbl_sac.on_trialStm{i}(5:end));
+        fno = tbl_sac.on_trialStm(i);
         % get the correct indices: since the pictures are presented in the
         % middle of the screen twice their side, we need to account for
         % that
@@ -158,8 +158,8 @@ for j = 1:length(ls_files)
             end
         end
         % get the new frame number, if still within a trial
-        if ~isempty(tbl_sac.off_trialStm{i})
-            fno = str2double(tbl_sac.off_trialStm{i}(5:end));
+        if ~isnan(tbl_sac.off_trialStm(i))
+            fno = tbl_sac.off_trialStm(i);
         end
         % get the correct indices: since the pictures are presented in the
         % middle of the screen twice their side, we need to account for
