@@ -16,87 +16,116 @@ function preproET_FER(filename, dir_path)
 subID = convertStringsToChars(extractBefore(filename,"_"));
 fprintf('\nNow processing subject %s.\n', extractAfter(subID,'-'));
 
-% set options for reading in the data
-opts = delimitedTextImportOptions("NumVariables", 11);
-opts.DataLines = [2, Inf];
-opts.Delimiter = ",";
-opts.VariableNames = ["timestamp", "trigger", "leftScreenX", "leftScreenY",...
-    "rightScreenX", "rightScreenY", "leftPupilMajorAxis", "leftPupilMinorAxis",...
-    "rightPupilMajorAxis", "rightPupilMinorAxis", "comment"];
-opts.VariableTypes = ["double", "double", "double", "double", "double",...
-    "double", "double", "double", "double", "double", "string"];
+% screen information
+screen_res = [2560 1600];
+screen_size = [0.344 0.215];
 
-tbl = readtable([dir_path filesep filename], opts); 
+% check if the table already exists
+if exist([dir_path filesep subID '_tbl.mat'], 'file')
+    % if yes, then load it instead of recreating
+    load([dir_path filesep subID '_tbl.mat'], 'tbl')
+
+else
+
+    % set options for reading in the data
+    opts = delimitedTextImportOptions("NumVariables", 11);
+    opts.DataLines = [2, Inf];
+    opts.Delimiter = ",";
+    opts.VariableNames = ["timestamp", "trigger", "leftScreenX", "leftScreenY",...
+        "rightScreenX", "rightScreenY", "leftPupilMajorAxis", "leftPupilMinorAxis",...
+        "rightPupilMajorAxis", "rightPupilMinorAxis", "comment"];
+    opts.VariableTypes = ["double", "double", "double", "double", "double",...
+        "double", "double", "double", "double", "double", "string"];
+    
+    tbl = readtable([dir_path filesep filename], opts); 
+    tbl.pupilDiameter = mean([tbl.leftPupilMajorAxis,tbl.leftPupilMinorAxis],2);
+    tbl.tracked = bitget(tbl.trigger,14-3); 
+    tbl.pupilDiameterRight = mean([tbl.rightPupilMajorAxis,tbl.rightPupilMinorAxis],2);
+    tbl.trackedRight = bitget(tbl.trigger,15-3); 
+    
+    %% add trial information
+    
+    % total number of trials
+    not = 64;
+    
+    % find trial indices
+    trl = tbl.comment(~ismissing(tbl.comment));
+    trl = split(trl, "_");
+    idx = find(extractBefore(tbl.comment,4) == "pic");
+    
+    if not ~= size(unique(trl(:,2)),1)
+        warning("This FER dataset does NOT have the correct amount of 64 trials!")
+    end
+    
+    % add another row at the end
+    if height(tbl)-idx(end,1) < 500
+        last = height(tbl)-idx(end,1);
+    else
+        last = 10;
+    end
+    idx(end+1,:) = idx(end,1)+last;
+    
+    % create empty columns to be filled with information
+    tbl.trialNo   = strings(height(tbl),1);
+    tbl.trialStm  = strings(height(tbl),1);
+    tbl.trialEmo  = strings(height(tbl),1);
+    
+    % loop through the trials and add the information from the comment: 
+    % "trial", "pic", "emotion"
+    for i = 1:(size(idx,1)-1)
+    
+        % check if this is the last pic of a trial
+        if i == (size(idx,1)-1)
+            last = idx(i,1) + 10; % if last pic at all, take 20ms
+        elseif trl(i,2) ~= trl(i+1,2)
+            last = idx(i,1) + 10; % if yes, take 20ms
+        else
+            last = idx(i+1,1)-1;  % if no, take all until the next one
+        end
+        % trial number
+        tbl.trialNo(idx(i,1):last)   = trl(i,2);
+        % trial stimulus (exact pic)
+        tbl.trialStm(idx(i,1):last)  = trl(i,1)+"_"+trl(i,3);
+        % trial emotion
+        tbl.trialEmo(idx(i,1):last)   = trl(i,4);
+    
+    end
+
+end 
+
+% calculate 
 tbl.pupilDiameter = mean([tbl.leftPupilMajorAxis,tbl.leftPupilMinorAxis],2);
 tbl.tracked = bitget(tbl.trigger,14-3); 
 tbl.pupilDiameterRight = mean([tbl.rightPupilMajorAxis,tbl.rightPupilMinorAxis],2);
 tbl.trackedRight = bitget(tbl.trigger,15-3); 
+    
+% format gaze directions as screen pixel coords for NH2010
+tbl.xPixel = ((tbl.leftScreenX + tbl.rightScreenX)/2)*...
+    (screen_res(1)/(screen_size(1)*1000));
+tbl.yPixel = ((tbl.leftScreenY + tbl.rightScreenY)/2)*...
+    (screen_res(2)/(screen_size(2)*1000));
 
-%% add trial information
-
-% total number of trials
-not = 64;
-
-% find trial indices
-trl = tbl.comment(~ismissing(tbl.comment));
-trl = split(trl, "_");
-idx = find(extractBefore(tbl.comment,4) == "pic");
-
-if not ~= size(unique(trl(:,2)),1)
-    warning("This FER dataset does NOT have the correct amount of 64 trials!")
-end
-
-% add another row at the end
-if height(tbl)-idx(end,1) < 500
-    last = height(tbl)-idx(end,1);
-else
-    last = 10;
-end
-idx(end+1,:) = idx(end,1)+last;
-
-% create empty columns to be filled with information
-tbl.trialNo   = strings(height(tbl),1);
-tbl.trialStm  = strings(height(tbl),1);
-tbl.trialEmo  = strings(height(tbl),1);
-
-% loop through the trials and add the information from the comment: 
-% "trial", "pic", "emotion"
-for i = 1:(size(idx,1)-1)
-
-    % check if this is the last pic of a trial
-    if i == (size(idx,1)-1)
-        last = idx(i,1) + 10; % if last pic at all, take 20ms
-    elseif trl(i,2) ~= trl(i+1,2)
-        last = idx(i,1) + 10; % if yes, take 20ms
-    else
-        last = idx(i+1,1)-1;  % if no, take all until the next one
-    end
-    % trial number
-    tbl.trialNo(idx(i,1):last)   = trl(i,2);
-    % trial stimulus (exact pic)
-    tbl.trialStm(idx(i,1):last)  = trl(i,1)+"_"+trl(i,3);
-    % trial emotion
-    tbl.trialEmo(idx(i,1):last)   = trl(i,4);
-
-end
+% save the table
+save([dir_path filesep subID '_tbl.mat'], 'tbl');
 
 %% classification of events
 
 % generate parameters for NH2010 classification code.
 ETparams = defaultParameters;
-ETparams.screen.resolution              = [2560 1600];   % screen resolution in pixel
-ETparams.screen.size                    = [0.344 0.215]; % screen size in m
+ETparams.screen.resolution              = screen_res;   % screen resolution in pixel
+ETparams.screen.size                    = screen_size; % screen size in m
 ETparams.screen.viewingDist             = 0.57;          % viewing distance in m
 ETparams.screen.dataCenter              = [ 0 0];        % center of screen has these coordinates in data
 ETparams.screen.subjectStraightAhead    = [ 0 0];        % specify the screen coordinate that is straight ahead of the subject. Just specify the middle of the screen unless its important to you to get this very accurate!
 
-% format gaze directions as screen pixel coordinates for NH2010
-tbl.xPixel = tbl.leftScreenX*(ETparams.screen.resolution(1)/(ETparams.screen.size(1)*1000));
-tbl.yPixel = tbl.leftScreenY*(ETparams.screen.resolution(2)/(ETparams.screen.size(2)*1000));
-
 % run the NH2010 classifier code on full data set
 [classificationData,ETparams]   = runNH2010Classification(...
     tbl.xPixel,tbl.yPixel,tbl.pupilDiameter,ETparams);
+
+% add a NOT in front of data if more than 1/3 missing or blinks
+if classificationData.isNoiseTrial
+    subID = ['NOT-' subID];
+end
 
 % merge glissades with saccades
 classificationData = mergeSaccadesAndGlissades(classificationData);
