@@ -3,20 +3,29 @@ library(tidyverse)
 fl.path = '/home/emba/Documents/EMBA'
 dt.path = paste(fl.path, 'BVET', sep = "/")
 
-# load the behavioural data -----------------------------------------------
 
+# load the data -----------------------------------------------------------
+
+# behavioural data
 df.beh = readRDS(paste(dt.path, "df_FER.RDS", sep = "/"))
+
+# fixation data
+df.fix.all = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T) %>%
+  setNames(nm = .) %>%
+  map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
+  mutate(
+    subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_fixations_AOI.csv", "", fln)),
+    off_trialStm = as.numeric(gsub("pic_", "", off_trialStm)),
+    on_trialStm  = as.numeric(gsub("pic_", "", on_trialStm))
+  )
 
 # fixation analysis -------------------------------------------------------
 
 # load the relevant fixation data in long format
-df.fix = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T) %>%
-  setNames(nm = .) %>%
-  map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
-  mutate(
-    subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_fixations_AOI.csv", "", fln))
-  ) %>% 
-  filter(!is.na(AOI)) %>% 
+df.fix = df.fix.all %>% 
+  filter(!is.na(AOI) & 
+           !is.na(off_trialNo) & 
+           on_trialNo == off_trialNo) %>% 
   group_by(subID, AOI, on_trialNo) %>%
   summarise(
     n = n(),
@@ -30,11 +39,6 @@ df.fix = merge(df.fix, df.beh, all.x = T) %>%
   mutate(
     fix.dur = fix.dur * 300 / frames
   ) %>% filter(!is.na(fix.dur))
-
-# visualise the distribution
-ggplot(data = df.fix, aes(x = fix.dur)) +
-  geom_density(alpha = .3, colour = "lightgrey", fill = "lightblue") + 
-  theme_bw()
 
 # saccade analysis --------------------------------------------------------
 
@@ -60,46 +64,23 @@ df.sac = merge(df.sac, df.beh, all.x = T) %>%
     n.sac = (n.sac*300) / frames
   ) %>% filter(!is.na(n.sac))
 
-# visualise the distribution
-ggplot(data = df.sac, aes(x = n.sac)) +
-  geom_density(alpha = .3, colour = "lightgrey", fill = "lightblue") + 
-  theme_bw()
+# explorative: first fixation ---------------------------------------------
 
-# explorative: first 60 pictures ------------------------------------------
-
-# how many pics to consider
-num.pic = 60
-
-# load the relevant fixation data in long format
-df.fix.start = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T) %>%
-  setNames(nm = .) %>%
-  map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
+df.fix.first = df.fix.all %>% 
+  filter(!is.na(AOI)) %>% 
+  group_by(subID, on_trialNo) %>%
   mutate(
-    subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_fixations_AOI.csv", "", fln)),
-    off_trialStm = as.numeric(gsub("pic_", "", off_trialStm))
-  ) %>% 
-  filter(!is.na(AOI) & off_trialStm <= num.pic) %>% 
-  group_by(subID, AOI, on_trialNo) %>%
-  summarise(
-    n = n(),
-    fix.dur = median(duration)
-  ) %>%
-  rename("trl" = "on_trialNo")
-
-# merge with behavioural data and discard trials with less than 60 frames seen
-df.fix.start = merge(df.fix.start, df.beh) %>%
-  filter(frames >= 60)
-
+    rown = row_number()
+  ) %>% ungroup() %>%
+  filter(rown == 1) %>%
+  select(subID, on_trialNo, on_trialStm, off_trialStm, AOI) %>%
+  rename("trl" = "on_trialNo",
+         "pic_start" = "on_trialStm",
+         "pic_end"   = "off_trialStm")
 
 # explorative: last fixation before decision ------------------------------
 
-df.fix.end = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T) %>%
-  setNames(nm = .) %>%
-  map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
-  mutate(
-    subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_fixations_AOI.csv", "", fln)),
-    off_trialStm = as.numeric(gsub("pic_", "", off_trialStm))
-  ) %>% 
+df.fix.end = df.fix.all %>% 
   filter(!is.na(AOI)) %>% 
   group_by(subID, on_trialNo) %>%
   mutate(
@@ -118,5 +99,5 @@ df.fix.end = merge(df.fix.end, df.beh, all = T) %>%
 # Save --------------------------------------------------------------------
 
 # save the data for analysis
-save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.fix.start", "df.fix.end"))
+save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.fix.first", "df.fix.end"))
 
