@@ -10,7 +10,7 @@ df.beh = readRDS(paste(dt.path, "df_FER.RDS", sep = "/"))
 # fixation analysis -------------------------------------------------------
 
 # load the relevant fixation data in long format
-df.fix = list.files(path = dt.path, pattern = "FER-ET.*_fixations_AOI.csv", full.names = T) %>%
+df.fix = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T) %>%
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(
@@ -39,7 +39,7 @@ ggplot(data = df.fix, aes(x = fix.dur)) +
 # saccade analysis --------------------------------------------------------
 
 # load the relevant saccade data in long format
-df.sac = list.files(path = dt.path, pattern = "FER-ET.*_saccades_AOI.csv", full.names = T) %>%
+df.sac = list.files(path = dt.path, pattern = "^FER-ET.*_saccades_AOI.csv", full.names = T) %>%
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(
@@ -71,7 +71,7 @@ ggplot(data = df.sac, aes(x = n.sac)) +
 num.pic = 60
 
 # load the relevant fixation data in long format
-df.fix.start = list.files(path = dt.path, pattern = "FER-ET.*_fixations_AOI.csv", full.names = T) %>%
+df.fix.start = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T) %>%
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(
@@ -93,7 +93,7 @@ df.fix.start = merge(df.fix.start, df.beh) %>%
 
 # explorative: last fixation before decision ------------------------------
 
-df.fix.end = list.files(path = dt.path, pattern = "FER-ET.*_fixations_AOI.csv", full.names = T) %>%
+df.fix.end = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T) %>%
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(
