@@ -29,7 +29,7 @@ df.fix = df.fix.all %>%
   group_by(subID, AOI, on_trialNo) %>%
   summarise(
     n = n(),
-    fix.dur = median(duration)
+    fix.dur = sum(duration)
   ) %>%
   rename("trl" = "on_trialNo")
 
