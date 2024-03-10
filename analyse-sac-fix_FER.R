@@ -28,17 +28,32 @@ df.fix = df.fix.all %>%
            on_trialNo == off_trialNo) %>% 
   group_by(subID, AOI, on_trialNo) %>%
   summarise(
-    n = n(),
+    n.fix = n(),
     fix.dur = sum(duration)
   ) %>%
   rename("trl" = "on_trialNo")
 
+# add zeros for all AOIs that were not fixated
+df.fix = merge(df.fix, 
+               data.frame(
+                 subID    = rep(unique(df.fix$subID), each = max(df.fix$trl)*length(unique(df.fix$AOI))),
+                 trl      = rep(rep(1:max(df.fix$trl), each = length(unique(df.fix$AOI))), times = length(unique(df.fix$subID))),
+                 AOI      = rep(unique(df.fix$AOI), length.out = length(unique(df.fix$subID))*length(unique(df.fix$AOI))*max(df.fix$trl))), 
+               all = T) %>%
+  mutate(
+    fix.dur = if_else(!is.na(fix.dur), fix.dur, 0),
+    n.fix   = if_else(!is.na(n.fix), n.fix, 0)
+  )
+
 # merge with behavioural data
-df.fix = merge(df.fix, df.beh, all.x = T) %>%
+df.fix = merge(df.fix, df.beh %>% filter(subID %in% unique(df.fix$subID)), all.x = T) %>%
   # how many would it be if they had seen all frames
   mutate(
     fix.dur = fix.dur * 300 / frames
-  ) %>% filter(!is.na(fix.dur))
+  ) %>% 
+  # only keep participants who are included in behavioural analysis
+  filter(!is.na(emo)) %>%
+  mutate_if(is.character, as.factor)
 
 # saccade analysis --------------------------------------------------------
 
@@ -57,12 +72,24 @@ df.sac = list.files(path = dt.path, pattern = "^FER-ET.*_saccades_AOI.csv", full
   ) %>%
   rename("trl" = "on_trialNo")
 
+# add zeros when no saccades
+df.sac = merge(df.sac, 
+               data.frame(
+                 subID    = rep(unique(df.sac$subID), each = max(df.sac$trl)*length(unique(df.sac$AOI))),
+                 trl      = rep(rep(1:max(df.sac$trl), each = length(unique(df.sac$AOI))), times = length(unique(df.sac$subID))),
+                 AOI      = rep(unique(df.sac$AOI), length.out = length(unique(df.sac$subID))*length(unique(df.sac$AOI))*max(df.sac$trl))), 
+               all = T) %>%
+  mutate(
+    n.sac   = if_else(!is.na(n.sac), n.sac, 0)
+  )
+
 # merge with behavioural data
 df.sac = merge(df.sac, df.beh, all.x = T) %>%
   # how many would it be if they had seen all frames
   mutate(
     n.sac = (n.sac*300) / frames
-  ) %>% filter(!is.na(n.sac))
+  ) %>% filter(!is.na(emo)) %>%
+  mutate_if(is.character, as.factor)
 
 # explorative: first fixation ---------------------------------------------
 
@@ -76,7 +103,8 @@ df.fix.first = df.fix.all %>%
   select(subID, on_trialNo, on_trialStm, off_trialStm, AOI) %>%
   rename("trl" = "on_trialNo",
          "pic_start" = "on_trialStm",
-         "pic_end"   = "off_trialStm")
+         "pic_end"   = "off_trialStm") %>%
+  mutate_if(is.character, as.factor)
 
 # explorative: last fixation before decision ------------------------------
 
@@ -94,7 +122,8 @@ df.fix.end = df.fix.all %>%
          "pic_end" = "off_trialStm")
 
 df.fix.end = merge(df.fix.end, df.beh, all = T) %>% 
-  filter(!is.na(AOI) & !is.na(frames))
+  filter(!is.na(AOI) & !is.na(frames)) %>%
+  mutate_if(is.character, as.factor)
 
 # Save --------------------------------------------------------------------
 
