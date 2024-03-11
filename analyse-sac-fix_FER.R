@@ -108,6 +108,7 @@ df.fix.first = df.fix.all %>%
 
 # merge with behavioural data
 df.fix.first = merge(df.fix.first, df.beh, all.x = T) %>%
+  filter(!is.na(emo)) %>%
   mutate_if(is.character, as.factor)
 
 # explorative: last fixation before decision ------------------------------
