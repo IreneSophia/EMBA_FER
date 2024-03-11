@@ -106,9 +106,13 @@ df.fix.first = df.fix.all %>%
          "pic_end"   = "off_trialStm") %>%
   mutate_if(is.character, as.factor)
 
+# merge with behavioural data
+df.fix.first = merge(df.fix.first, df.beh, all.x = T) %>%
+  mutate_if(is.character, as.factor)
+
 # explorative: last fixation before decision ------------------------------
 
-df.fix.end = df.fix.all %>% 
+df.fix.last = df.fix.all %>% 
   filter(!is.na(AOI)) %>% 
   group_by(subID, on_trialNo) %>%
   mutate(
@@ -121,12 +125,12 @@ df.fix.end = df.fix.all %>%
          "pic_start" = "on_trialStm",
          "pic_end" = "off_trialStm")
 
-df.fix.end = merge(df.fix.end, df.beh, all = T) %>% 
+df.fix.last = merge(df.fix.last, df.beh, all = T) %>% 
   filter(!is.na(AOI) & !is.na(frames)) %>%
   mutate_if(is.character, as.factor)
 
 # Save --------------------------------------------------------------------
 
 # save the data for analysis
-save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.fix.first", "df.fix.end"))
+save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.fix.first", "df.fix.last"))
 
