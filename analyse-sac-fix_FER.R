@@ -23,15 +23,23 @@ df.fix.all = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv",
 
 # load the relevant fixation data in long format
 df.fix = df.fix.all %>% 
-  filter(!is.na(AOI) & 
-           !is.na(off_trialNo) & 
-           on_trialNo == off_trialNo) %>% 
-  group_by(subID, AOI, on_trialNo) %>%
+  # sum up fixation durations for each trial: 
+  # during a trial and start and end of fixation in the same trial
+  filter(!is.na(off_trialNo) & 
+           on_trialNo == off_trialNo) %>%
+  group_by(subID, on_trialNo) %>%
+  mutate(
+    fix.total = sum(duration)
+  ) %>%
+  # only keep fixations in an AOI
+  filter(!is.na(AOI)) %>% 
+  group_by(subID, AOI, on_trialNo, fix.total) %>%
   summarise(
     n.fix = n(),
     fix.dur = sum(duration)
   ) %>%
-  rename("trl" = "on_trialNo")
+  rename("trl" = "on_trialNo") %>%
+  arrange(subID, trl, AOI)
 
 # add zeros for all AOIs that were not fixated
 df.fix = merge(df.fix, 
@@ -43,6 +51,10 @@ df.fix = merge(df.fix,
   mutate(
     fix.dur = if_else(!is.na(fix.dur), fix.dur, 0),
     n.fix   = if_else(!is.na(n.fix), n.fix, 0)
+  ) %>%
+  arrange(subID, trl, AOI) %>%
+  mutate(
+    fix.perc = if_else(is.na(fix.total),0,fix.dur/fix.total)
   )
 
 # merge with behavioural data
