@@ -75,7 +75,11 @@ df.sac = list.files(path = dt.path, pattern = "^FER-ET.*_saccades_AOI.csv", full
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(
     subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_saccades_AOI.csv", "", fln))
-  ) %>% 
+  )
+
+subIDs = unique(df.sac$subID)
+
+df.sac = df.sac %>% 
   filter(on_AOI != off_AOI) %>% 
   mutate(AOI = as.factor(paste(on_AOI, off_AOI))) %>%
   group_by(subID, on_trialNo, AOI) %>%
@@ -87,9 +91,9 @@ df.sac = list.files(path = dt.path, pattern = "^FER-ET.*_saccades_AOI.csv", full
 # add zeros when no saccades
 df.sac = merge(df.sac, 
                data.frame(
-                 subID    = rep(unique(df.sac$subID), each = max(df.sac$trl)*length(unique(df.sac$AOI))),
-                 trl      = rep(rep(1:max(df.sac$trl), each = length(unique(df.sac$AOI))), times = length(unique(df.sac$subID))),
-                 AOI      = rep(unique(df.sac$AOI), length.out = length(unique(df.sac$subID))*length(unique(df.sac$AOI))*max(df.sac$trl))), 
+                 subID    = rep(subIDs, each = max(df.sac$trl)*length(unique(df.sac$AOI))),
+                 trl      = rep(rep(1:max(df.sac$trl), each = length(unique(df.sac$AOI))), times = length(subIDs)),
+                 AOI      = rep(unique(df.sac$AOI), length.out = length(subIDs)*length(unique(df.sac$AOI))*max(df.sac$trl))), 
                all = T) %>%
   mutate(
     n.sac   = if_else(!is.na(n.sac), n.sac, 0)
