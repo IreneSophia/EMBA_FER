@@ -83,11 +83,11 @@ for j = 1:length(ls_files)
             if x >= 1 && x <= size(mtx_aois,2) && y >= 1 && y <= size(mtx_aois,1)
                 if mtx_aois(y, x, fno) == 0.81
                     tbl_fix.AOI(i) = "eyes";
-                elseif mtx_aois(y, x, fno) == 0.82
-                    tbl_fix.AOI(i) = "mouth";
                 elseif mtx_aois(y, x, fno) == 0.84
-                    tbl_fix.AOI(i) = "nose";
+                    tbl_fix.AOI(i) = "mouth";
                 elseif mtx_aois(y, x, fno) == 0.86
+                    tbl_fix.AOI(i) = "nose";
+                elseif mtx_aois(y, x, fno) == 0.88
                     tbl_fix.AOI(i) = "fore";
                 end
             end
@@ -149,11 +149,11 @@ for j = 1:length(ls_files)
         if x >= 1 && x <= size(mtx_aois,2) && y >= 1 && y <= size(mtx_aois,1)
             if mtx_aois(y, x, fno) == 0.81
                 tbl_sac.on_AOI(i) = "eyes";
-            elseif mtx_aois(y, x, fno) == 0.82
-                tbl_sac.on_AOI(i) = "mouth";
             elseif mtx_aois(y, x, fno) == 0.84
-                tbl_sac.on_AOI(i) = "nose";
+                tbl_sac.on_AOI(i) = "mouth";
             elseif mtx_aois(y, x, fno) == 0.86
+                tbl_sac.on_AOI(i) = "nose";
+            elseif mtx_aois(y, x, fno) == 0.88
                 tbl_sac.on_AOI(i) = "fore";
             end
         end
