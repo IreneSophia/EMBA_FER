@@ -3,7 +3,6 @@ library(tidyverse)
 fl.path = '/home/emba/Documents/EMBA'
 dt.path = paste(fl.path, 'BVET', sep = "/")
 
-
 # load the data -----------------------------------------------------------
 
 # behavioural data
@@ -17,7 +16,11 @@ df.fix.all = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv",
     subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_fixations_AOI.csv", "", fln)),
     off_trialStm = as.numeric(gsub("pic_", "", off_trialStm)),
     on_trialStm  = as.numeric(gsub("pic_", "", on_trialStm))
-  )
+  ) %>%
+  mutate_if(is.character, as.factor)
+
+# get subIDs
+subIDs = unique(df.fix.all$subID)
 
 # fixation analysis -------------------------------------------------------
 
@@ -44,9 +47,9 @@ df.fix = df.fix.all %>%
 # add zeros for all AOIs that were not fixated
 df.fix = merge(df.fix, 
                data.frame(
-                 subID    = rep(unique(df.fix$subID), each = max(df.fix$trl)*length(unique(df.fix$AOI))),
-                 trl      = rep(rep(1:max(df.fix$trl), each = length(unique(df.fix$AOI))), times = length(unique(df.fix$subID))),
-                 AOI      = rep(unique(df.fix$AOI), length.out = length(unique(df.fix$subID))*length(unique(df.fix$AOI))*max(df.fix$trl))), 
+                 subID    = rep(subIDs, each = max(df.fix$trl)*length(unique(df.fix$AOI))),
+                 trl      = rep(rep(1:max(df.fix$trl), each = length(unique(df.fix$AOI))), times = length(subIDs)),
+                 AOI      = rep(unique(df.fix$AOI), length.out = length(subIDs)*length(unique(df.fix$AOI))*max(df.fix$trl))), 
                all = T) %>%
   mutate(
     fix.dur = if_else(!is.na(fix.dur), fix.dur, 0),
@@ -57,15 +60,17 @@ df.fix = merge(df.fix,
     fix.perc = if_else(is.na(fix.total),0,fix.dur/fix.total)
   )
 
-# merge with behavioural data
-df.fix = merge(df.fix, df.beh %>% filter(subID %in% unique(df.fix$subID)), all.x = T) %>%
-  # how many would it be if they had seen all frames
+# merge with behavioural data to only keep participants whose behavioural data 
+# was analysed
+df.fix = merge(df.fix, df.beh) %>%
+  mutate_if(is.character, as.factor) %>% 
+  group_by(subID) %>%
   mutate(
-    fix.dur = fix.dur * 300 / frames
-  ) %>% 
-  # only keep participants who are included in behavioural analysis
-  filter(!is.na(emo)) %>%
-  mutate_if(is.character, as.factor)
+    n.fix.total = sum(n.fix)
+  ) %>%
+  filter(
+    n.fix.total > max(df.fix$trl)
+  ) %>% ungroup()
 
 # saccade analysis --------------------------------------------------------
 
@@ -80,8 +85,10 @@ df.sac = list.files(path = dt.path, pattern = "^FER-ET.*_saccades_AOI.csv", full
 subIDs = unique(df.sac$subID)
 
 df.sac = df.sac %>% 
+  # only keep those that move between AOIs
   filter(on_AOI != off_AOI) %>% 
   mutate(AOI = as.factor(paste(on_AOI, off_AOI))) %>%
+  # sum the saccades for each trial
   group_by(subID, on_trialNo, AOI) %>%
   summarise(
     n.sac = n()
@@ -100,16 +107,23 @@ df.sac = merge(df.sac,
   )
 
 # merge with behavioural data
-df.sac = merge(df.sac, df.beh, all.x = T) %>%
+df.sac = merge(df.sac, df.beh) %>%
   # how many would it be if they had seen all frames
   mutate(
     n.sac = (n.sac*300) / frames
-  ) %>% filter(!is.na(emo)) %>%
-  mutate_if(is.character, as.factor)
+  ) %>%
+  mutate_if(is.character, as.factor) %>% 
+  group_by(subID) %>%
+  mutate(
+    n.sac.total = sum(n.sac)
+  ) %>%
+  filter(
+    n.sac.total > max(df.sac$trl)
+  ) %>% ungroup()
 
 # explorative: first fixation ---------------------------------------------
 
-df.fix.first = df.fix.all %>% 
+df.first = df.fix.all %>% 
   filter(!is.na(AOI)) %>% 
   group_by(subID, on_trialNo) %>%
   mutate(
@@ -123,13 +137,20 @@ df.fix.first = df.fix.all %>%
   mutate_if(is.character, as.factor)
 
 # merge with behavioural data
-df.fix.first = merge(df.fix.first, df.beh, all.x = T) %>%
-  filter(!is.na(emo)) %>%
-  mutate_if(is.character, as.factor)
+df.first = merge(df.first, df.beh) %>%
+  mutate_if(is.character, as.factor) %>% 
+  group_by(subID) %>%
+  mutate(
+    n.first = n()
+  ) %>%
+  # only keep participants with at least 2/3 of trials
+  filter(
+    n.first > max(df.first$trl)*2/3
+  ) %>% ungroup()
 
 # explorative: last fixation before decision ------------------------------
 
-df.fix.last = df.fix.all %>% 
+df.last = df.fix.all %>% 
   filter(!is.na(AOI)) %>% 
   group_by(subID, on_trialNo) %>%
   mutate(
@@ -142,12 +163,19 @@ df.fix.last = df.fix.all %>%
          "pic_start" = "on_trialStm",
          "pic_end" = "off_trialStm")
 
-df.fix.last = merge(df.fix.last, df.beh, all = T) %>% 
+df.last = merge(df.last, df.beh) %>% 
   filter(!is.na(AOI) & !is.na(frames)) %>%
-  mutate_if(is.character, as.factor)
+  mutate_if(is.character, as.factor) %>% 
+  group_by(subID) %>%
+  mutate(
+    n.last = n()
+  ) %>%
+  # only keep participants with at least 2/3 of trials
+  filter(
+    n.last > max(df.last$trl)*2/3
+  ) %>% ungroup()
 
 # Save --------------------------------------------------------------------
 
 # save the data for analysis
-save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.fix.first", "df.fix.last"))
-
+save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.first", "df.last"))
