@@ -78,6 +78,7 @@ exc1 = df.fer %>% group_by(subID) %>% summarise(acc = mean(acc)) %>% filter(acc 
 exc2 = df.ctr %>% group_by(subID) %>% summarise(acc = mean(acc)) %>% filter(acc < 2/3)
 exc = c(as.character(exc1$subID), as.character(exc2$subID))
 print(length(exc)) # print how many have to be excluded
+write(exc, file.path(dt.path, 'FER-exc.txt'))
 
 # load pilot participants and add to the list
 pilot = read_csv(paste0(dt.path, "/pilot-subIDs.csv"))
