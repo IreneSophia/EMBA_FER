@@ -8,26 +8,16 @@ output: html_document
 ```{r setup, include = FALSE, warning = FALSE, message = FALSE}
 
 knitr::opts_chunk$set(echo = TRUE)
-if (file.exists('/home/iplank/Insync/10planki@gmail.com/Google Drive/NEVIA/study_PRED/stim_evaluation/')){
-  knitr::opts_knit$set(root.dir = '/home/iplank/Insync/10planki@gmail.com/Google Drive/NEVIA/study_PRED/stim_evaluation/')
-} else if (file.exists('C:/Users/Oswin/Google Drive/NEVIA/study_PRED/stim_evaluation')){
-  knitr::opts_knit$set(root.dir = 'C:/Users/Oswin/Google Drive/NEVIA/study_PRED/stim_evaluation')
-}
+knitr::opts_knit$set(root.dir = '/home/emba/Documents/EMBA/stim_evaluation')
 
 library(knitr)           # kable
 library(tidyverse)       # tibble stuff
-library(data.table)      # melt / dcast
-library(lmerTest)        # lmer function
-library(jtools)          # summ(model, digits=3, confint=T)
-library(sjPlot)          # tab_model
-library(JWileymisc)      # modelPerformance and modelTest
-library(multilevelTools) # to use modelTest and modelPerformance with lmer
-library(car)             # contr.Sum function
+library(reshape2)         # melt / dcast
 library(ggplot2)         # plots
-library(bayestestR)      # Bayesian model comparison
-library(performance)     # check_model and compare_performance
+#library(bayestestR)      # Bayesian model comparison
+#library(performance)     # check_model and compare_performance
 library(effectsize)      # allows to interpret effect sizes
-library(ggpubr)          # ggarrange
+#library(ggpubr)          # ggarrange
 
 ```
 
@@ -190,6 +180,7 @@ rm(list = setdiff(ls(), c("df")))
 
 
 ```
+
 # Choosing videos for the FER task
 
 For the FER task, we want to choose the most natural video groups. Two things are important: that the videos are consistently rated as natural (median above 50) and that this is not due to a few very high ratings. First, outliers are removed that are lower than or equal to the 25% quantile minus 1.5 times the interquartile range. Then, face IDs are chosen who have the highest minima and a median per emotion of at least 50. We chose the median instead of the mean because the distributions are not at all normally distributed. The comments concerning the selected videos are saved to further improve them. 
@@ -227,7 +218,11 @@ df_FER_sel_agg = df_FER_sel %>% group_by(FID, VID, EMO, GEN) %>%
     NAT_med = median(NAT, na.rm = T),
     NAT_min = min(NAT, na.rm = T)
   ) %>%
-  arrange(FID, EMO, VID)
+  arrange(FID, EMO, VID) %>%
+  mutate(
+    EMO     = as.factor(EMO),
+    GEN     = as.factor(GEN)
+  )
 kable(df_FER_sel_agg)
 
 # # get all comments 
@@ -246,7 +241,7 @@ rm(list = setdiff(ls(), c("df", "df_FER_sel", "df_FER_sel_agg", "df_FER_sel_COM"
 ``` {r sel_FER_vis}
 
 # set colour scheme
-cls = c("#007e36", "#86eb9a") 
+cls = c("#0072B2", "#009E73") 
 names(cls) = c("M", "F")
 
 # create boxplots
@@ -262,35 +257,24 @@ ggplot(df_FER_sel, aes(x = EMO, y = NAT, fill = GEN)) +
 
 ## Gender and emotion effects
 
-A linear mixed model is computed to assess whether the four emotions of the selected videos are comparable in terms of natural ratings. Here, we use sum coding for the emotion and compare each emotion to the grand mean of all of them. This is explained more clearly on [CrossValidated](https://stats.stackexchange.com/questions/320740/how-to-interpret-sum-contrast-in-regression-lmm): 
+To stay in line with our main analysis, we compute a Bayesian ANOVA to assess possible differences in naturalness between emotions and gender expression. 
 
-> <font size="2">`contr.sum` makes sure all the contrasts sum to zero so that the "intercept" term is the grand mean. The effects are summarized with coefficients representing the number of factor levels ($k$) minus 1. In this case, the last level is dropped. The coefficients represent a mean difference from the "grand mean" for the first $k−1$ factor levels.
+``` {r aov_FER}
 
-> If you fit `lm(y ~ x - 1)` where $x$ has the sum contrast, then the model coefficients are the stratum specific means for each level of $x$, but the inference tests a mean difference from 0 for each level of $x$. This is useless unless $x$ [!sic?] is centered. I suggest you fit this model if you wish to simultaneously test the 3 parameters' difference from the grand mean. Technically speaking, this is overkill since such a model is overspecified, but that isn't inherently a bad thing.
-</font size>
+# check normal distribution
+kable(df_FER_sel_agg %>% 
+        group_by(EMO, GEN) %>%
+        rstatix::shapiro_test(NAT_avg) %>%
+        mutate(
+sig = if_else(p < 0.05, "*", "")
+        ))
 
-
-``` {r lmm_FER}
-
-# center naturalnes
-df_FER_sel$NAT = scale(df_FER_sel$NAT, scale = F)
-
-# set factors correctly
-df_FER_sel$EMO = as.factor(df_FER_sel$EMO)
-contrasts(df_FER_sel$EMO)  = contr.Sum(levels(df_FER_sel$EMO))
-
-# model -> each level of EMO separately? why?
-m1 = lmer(formula = NAT ~ EMO - 1 + # fixed effects
-                         (1 | CASE) + (1 | VID), # random effects
-                         data = df_FER_sel, REML = T)
-
-tab_model(m1, show.df = F, show.stat = T, show.ci = F, linebreak = F, wrap.labels = 80)
-
-set_theme(base = theme_classic())
-
-plot_model(m1)
+# now we can compute our ANOVA
+BayesFactor::anovaBF(NAT_avg ~ GEN * EMO, data = df_FER_sel_agg)
 
 ```
+
+None of the models credibly outperform the intercept-only model for this data, with anecdotal evidence against all models except the one including emotion as a predictor for which there was anecdotal evidence in favour. Therefore, the stimuli are well matched in terms of naturalness.
 
 # Choosing videos for the PAL task
 
@@ -332,7 +316,11 @@ df_PAL_sel_agg = df_PAL_sel %>% group_by(FID, VID, EMO, GEN) %>%
     NAT_med = median(NAT, na.rm = T),
     NAT_min = min(NAT, na.rm = T)
   ) %>%
-  arrange(FID, EMO, VID)
+  arrange(FID, EMO, VID) %>%
+  mutate(
+    EMO = as.factor(EMO),
+    GEN = as.factor(GEN)
+  )
 kable(df_PAL_sel_agg)
 
 # # get all comments 
@@ -360,25 +348,28 @@ ggplot(df_PAL_sel, aes(x = EMO, y = NAT, fill = GEN)) +
 
 ## Gender and emotion effects
 
-The same linear mixed model is computed to assess whether the two emotions of the selected videos are comparable in terms of natural ratings. 
+To stay in line with our main analysis, we compute a Bayesian ANOVA to assess possible differences in naturalness between emotions and gender expression. 
 
+``` {r aov_PAL}
 
-``` {r lmm_PAL}
+# check normal distribution
+kable(df_PAL_sel_agg %>% 
+        group_by(EMO, GEN) %>%
+        rstatix::shapiro_test(NAT_avg) %>%
+        mutate(
+sig = if_else(p < 0.05, "*", "")
+        ))
 
-# center naturalnes
-df_PAL_sel$NAT = scale(df_PAL_sel$NAT, scale = F)
+# not normally distributed in female AF group, therefore, rank transform
+df_PAL_sel_agg = df_PAL_sel_agg %>% 
+  ungroup() %>%
+  mutate(
+    rNAT_avg   = rank(NAT_avg)
+  )
 
-# set factors correctly
-df_PAL_sel$EMO = as.factor(df_PAL_sel$EMO)
-contrasts(df_PAL_sel$EMO)  = contr.Sum(levels(df_PAL_sel$EMO))
-
-# model -> each level of EMO separately? why?
-m2 = lmer(formula = NAT ~ EMO - 1 + # fixed effects
-                         (1 | CASE) + (1 | VID), # random effects
-                         data = df_PAL_sel, REML = T)
-
-tab_model(m2, show.df = F, show.stat = T, show.ci = F, linebreak = F, wrap.labels = 80)
-
-plot_model(m2)
+# now we can compute our ANOVA
+BayesFactor::anovaBF(rNAT_avg ~ GEN * EMO, data = df_PAL_sel_agg)
 
 ```
+
+None of the models credibly outperform the intercept-only model for this data, with moderate and anecdotal evidence against the models including any predictors. Therefore, the stimuli are well matched in terms of naturalness.
