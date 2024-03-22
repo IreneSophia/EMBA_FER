@@ -93,6 +93,11 @@ df.sac.all = merge(df.sac.all,
                  ) %>% mutate(sac = 0), 
                all = T)
 
+# merge with behavioural data for more info on each trial and to only include
+# participants also included in the behavioural analysis
+df.sac.all = merge(df.sac.all, df.beh)
+subIDs = unique(df.sac.all$subID)
+
 df.sac = df.sac.all %>% 
   # only keep those that move between AOIs
   filter(on_AOI != off_AOI) %>% 
@@ -111,16 +116,17 @@ df.sac = merge(df.sac,
                  AOI      = rep(unique(df.sac$AOI), length.out = length(subIDs)*length(unique(df.sac$AOI))*max(df.sac$trl))), 
                all = T) %>%
   mutate(
-    n.sac   = if_else(!is.na(n.sac), n.sac, 0)
+    n.sac  = if_else(!is.na(n.sac), n.sac, 0)
   )
 
-# merge with behavioural data
 df.sac = merge(df.sac, df.beh) %>%
   # how many would it be if they had seen all frames
   mutate(
     n.sac = (n.sac*300) / frames
   ) %>%
   mutate_if(is.character, as.factor) %>% 
+  # sum up number of saccades per participant to exclude participants with fewer
+  # saccades than number of trials left
   group_by(subID) %>%
   mutate(
     n.sac.total = sum(n.sac)
