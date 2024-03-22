@@ -75,27 +75,35 @@ df.fix = merge(df.fix, df.beh) %>%
 # saccade analysis --------------------------------------------------------
 
 # load the relevant saccade data in long format
-df.sac = list.files(path = dt.path, pattern = "^FER-ET.*_saccades_AOI.csv", full.names = T) %>%
+df.sac.all = list.files(path = dt.path, pattern = "^FER-ET.*_saccades_AOI.csv", full.names = T) %>%
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(
     subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_saccades_AOI.csv", "", fln))
-  )
+  ) %>%
+  rename("trl" = "on_trialNo")
 
-subIDs = unique(df.sac$subID)
+subIDs = unique(df.sac.all$subID)
 
-df.sac = df.sac %>% 
+# add zeros when no saccades
+df.sac.all = merge(df.sac.all, 
+               data.frame(
+                 subID    = rep(subIDs, each = max(df.sac.all$trl)),
+                 trl      = rep(1:max(df.sac.all$trl), times = length(subIDs))
+                 ) %>% mutate(sac = 0), 
+               all = T)
+
+df.sac = df.sac.all %>% 
   # only keep those that move between AOIs
   filter(on_AOI != off_AOI) %>% 
   mutate(AOI = as.factor(paste(on_AOI, off_AOI))) %>%
   # sum the saccades for each trial
-  group_by(subID, on_trialNo, AOI) %>%
+  group_by(subID, trl, AOI) %>%
   summarise(
     n.sac = n()
-  ) %>%
-  rename("trl" = "on_trialNo")
+  )
 
-# add zeros when no saccades
+# again, add zeros when no saccades for an AOI
 df.sac = merge(df.sac, 
                data.frame(
                  subID    = rep(subIDs, each = max(df.sac$trl)*length(unique(df.sac$AOI))),
@@ -178,4 +186,5 @@ df.last = merge(df.last, df.beh) %>%
 # Save --------------------------------------------------------------------
 
 # save the data for analysis
-save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), list = c("df.fix", "df.sac", "df.first", "df.last"))
+save(file = paste(dt.path, "FER_ET_data.RData", sep = "/"), 
+     list = c("df.fix", "df.sac", "df.sac.all", "df.first", "df.last"))
