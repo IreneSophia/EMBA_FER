@@ -623,9 +623,9 @@ priors = c(
 
 ```{r priorpc_SBC_last}
 
-if (file.exists(file.path(cache_dir, paste0("df_res_", code, ".csv")))) {
+if (file.exists(file.path(cache_dir, paste0("df_res_", code, ".rds")))) {
   # load in the results of the SBC
-  df.results = read_csv(file = file.path(cache_dir, paste0("df_res_", code, ".csv")))
+  df.results = readRDS(file = file.path(cache_dir, paste0("df_res_", code, ".rds")))
   df.backend = readRDS(file.path(cache_dir, paste0("df_div_", code, ".rds")))
   dat        = readRDS(file.path(cache_dir, paste0("dat_", code, ".rds")))
 } else {
@@ -639,7 +639,10 @@ if (file.exists(file.path(cache_dir, paste0("df_res_", code, ".csv")))) {
   res = compute_SBC(dat, bck,
        cache_mode     = "results", 
        cache_location = file.path(cache_dir, paste0("res_", code)))
-  write_csv(res$stats, file = file.path(cache_dir, paste0("df_res_", code, ".csv"))) # otherwise this file is too large!!!
+  df.results = res$stats
+  saveRDS(df.results, file = file.path(cache_dir, paste0("df_res_", code, "_large.rds"))) 
+  # also save a smaller version of the data frame to comply with github
+  saveRDS(df.results %>% filter(substr(variable,1,2) != "r_"), file = file.path(cache_dir, paste0("df_res_", code, ".rds"))) 
   saveRDS(res$backend_diagnostics, file = file.path(cache_dir, paste0("df_div_", code, ".rds")))
 }
 
