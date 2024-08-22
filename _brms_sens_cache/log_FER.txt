@@ -1,0 +1,141 @@
+
+---------------------------------------
+2024-08-01 17:20:26.890517: chosen
+
+2024-08-01 17:20:26.890911: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 17:21:14.206536: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 17:22:32.960428: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 17:24:16.097399: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 17:25:39.432224: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 17:27:10.128476: sdx1.25
+
+2024-08-01 17:27:10.12859: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 17:28:58.528016: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 17:30:16.560872: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 17:32:00.425764: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 17:33:23.646096: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 17:34:53.870626: sdx1.5
+
+2024-08-01 17:34:53.870757: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 17:36:41.466342: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 17:37:59.266526: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 17:39:44.420682: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 17:41:07.896865: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 17:42:37.56591: sdx2
+
+2024-08-01 17:42:37.566034: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 17:44:25.769664: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 17:45:43.188282: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 17:47:27.253614: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 17:48:50.562061: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 17:50:21.66852: sdx4
+
+2024-08-01 17:50:21.668637: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 17:52:11.070484: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 17:53:28.833882: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 17:55:12.70837: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 17:56:36.871341: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 17:58:10.445857: sdx6
+
+2024-08-01 17:58:10.445984: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 17:59:59.158836: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 18:01:17.150628: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 18:03:02.826778: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 18:04:26.557134: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 18:05:59.568275: sdx8
+
+2024-08-01 18:05:59.568391: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 18:07:48.110197: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 18:09:05.843951: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 18:10:51.133265: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 18:12:14.550399: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 18:13:48.704347: sdx10
+
+2024-08-01 18:13:48.704475: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 18:15:37.478901: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 18:16:55.25117: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 18:18:38.940702: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 18:20:02.190114: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 18:21:34.872885: sdx0.875
+
+2024-08-01 18:21:34.873137: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 18:23:21.355654: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 18:24:39.621048: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 18:26:23.470283: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 18:27:47.390379: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 18:29:14.350561: sdx0.75
+
+2024-08-01 18:29:14.350708: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 18:31:00.000349: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 18:32:26.192326: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 18:34:09.831455: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 18:35:41.495425: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 18:37:08.104091: sdx0.5
+
+2024-08-01 18:37:08.104253: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 18:38:45.822551: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+
+---------------------------------------
+2024-08-01 18:40:03.654566: sdx0.25
+
+2024-08-01 18:40:03.65471: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 18:41:27.926168: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 18:42:44.995286: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 18:44:07.489289: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 18:45:28.613689: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 18:46:51.246795: sdx0.167
+
+2024-08-01 18:46:51.246929: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 18:48:13.548601: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 18:49:29.560559: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 18:50:50.914561: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 18:52:11.041959: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 18:53:32.177846: sdx0.125
+
+2024-08-01 18:53:32.177973: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 18:54:55.816686: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 18:56:10.794436: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 18:57:31.893014: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 18:58:51.918504: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-01 19:00:12.586857: sdx0.1
+
+2024-08-01 19:00:12.587009: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-01 19:01:35.472923: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-01 19:02:51.401601: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-01 19:04:13.205854: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-01 19:05:33.142348: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)
+
+---------------------------------------
+2024-08-05 11:25:08.493951: sdx0.5
+
+2024-08-05 11:25:08.494339: disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo + (1 | subID)
+2024-08-05 11:25:09.557556: disc | trunc(lb = 0, ub = 1) ~ 1 + (1 | subID)
+2024-08-05 11:25:53.45615: disc | trunc(lb = 0, ub = 1) ~ diagnosis + emo + (1 | subID)
+2024-08-05 11:27:29.007836: disc | trunc(lb = 0, ub = 1) ~ diagnosis + (1 | subID)
+2024-08-05 11:28:51.069719: disc | trunc(lb = 0, ub = 1) ~ emo + (1 | subID)

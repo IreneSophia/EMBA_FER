@@ -1,0 +1,135 @@
+
+---------------------------------------
+2024-08-02 08:40:58.915521: chosen
+
+2024-08-02 08:40:58.916066: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 08:43:14.872848: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 08:48:56.013531: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 08:54:54.497565: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 09:00:42.703988: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 09:44:18.940993: sdx1.25
+
+2024-08-02 09:44:18.947603: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 09:50:24.084288: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 09:56:12.789936: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 10:02:09.568504: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 10:08:01.174677: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 10:13:53.948253: sdx1.5
+
+2024-08-02 10:13:53.948396: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 10:19:59.341005: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 10:25:51.704686: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 10:31:49.152363: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 10:37:43.588219: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 10:43:41.692271: sdx2
+
+2024-08-02 10:43:41.692385: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 10:49:47.586286: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 10:55:30.468629: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 11:01:25.525533: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 11:07:18.964123: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 11:13:20.018955: sdx4
+
+2024-08-02 11:13:20.019087: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 11:19:23.296555: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 11:25:13.001827: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 11:31:11.121961: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 11:37:02.416297: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 11:42:58.251253: sdx6
+
+2024-08-02 11:42:58.251385: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 11:49:02.58561: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 11:54:57.599828: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 12:00:56.705062: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 12:06:48.50256: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 12:12:44.587866: sdx8
+
+2024-08-02 12:12:44.587998: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 12:18:52.684771: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 12:24:49.031554: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 12:30:47.762142: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 12:36:37.464563: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 12:42:33.736737: sdx10
+
+2024-08-02 12:42:33.736862: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 12:48:41.632571: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 12:54:41.336393: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 13:00:39.761805: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 13:06:33.191714: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 13:12:29.664448: sdx0.875
+
+2024-08-02 13:12:29.664565: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 13:18:33.506796: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 13:24:30.548119: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 13:30:24.981014: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 13:36:13.376776: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 13:42:03.222472: sdx0.75
+
+2024-08-02 13:42:03.222595: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 13:48:02.309381: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 13:53:49.950166: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 13:59:42.240772: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 14:05:29.758617: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 14:11:21.060735: sdx0.5
+
+2024-08-02 14:11:21.060872: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 14:17:17.128035: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 14:23:05.539969: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 14:28:58.306955: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 14:34:41.702185: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 14:40:29.163268: sdx0.25
+
+2024-08-02 14:40:29.163396: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 14:46:21.635924: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 14:52:07.546752: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 14:57:55.789446: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 15:03:40.284093: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 15:09:19.308287: sdx0.167
+
+2024-08-02 15:09:19.3084: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 15:15:12.424006: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 15:21:05.812383: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 15:26:54.697014: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 15:32:39.543005: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 15:38:25.929101: sdx0.125
+
+2024-08-02 15:38:25.929233: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 15:44:20.577847: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 15:50:14.36368: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 15:56:03.650776: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 16:01:53.887118: acc.code ~ emo + (emo | subID) + (diagnosis | video)
+
+---------------------------------------
+2024-08-02 16:07:39.433701: sdx0.1
+
+2024-08-02 16:07:39.433829: acc.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video)
+2024-08-02 16:13:33.809162: acc.code ~ 1 + (emo | subID) + (diagnosis | video)
+2024-08-02 16:19:18.955554: acc.code ~ diagnosis + emo + (emo | subID) + (diagnosis | video)
+2024-08-02 16:25:11.276729: acc.code ~ diagnosis + (emo | subID) + (diagnosis | video)
+2024-08-02 16:30:58.005938: acc.code ~ emo + (emo | subID) + (diagnosis | video)
