@@ -24,7 +24,11 @@ We also share the models and the results of the simulation-based calibration. **
 
 Data is shared as RDS files which can be read into R. In the following, you can find a description of the columns contained in the data frame saved in these files. 
 
-### `FER_data.rds`
+### `FER_data.RData`
+
+This file contains the following data frames: 
+
+`df.fer`
 
 * subID : anonymised participant ID
 * diagnosis: diagnostic status of this participant, either ADHD, ASD or COMP (comparison group, no psychiatric diagnoses)
@@ -38,6 +42,16 @@ Data is shared as RDS files which can be read into R. In the following, you can 
 * acc.code : same, but with 0 for FALSE and 1 for TRUE
 * fsr.disc : facial species recognition discrimination threshold of this participant, estimated from the control task
 * fsr.acc : overall accuracy of this participant in the control task
+
+`df.table`
+
+* measurement : questionnaire or socio-demographic variable
+* ADHD : mean and standard deviation or counts for the gender identities for the ADHD group
+* ASD : mean and standard deviation or counts for the gender identities for the ASD group
+* COMP : mean and standard deviation or counts for the gender identities for the COMP group
+* logBF10 : logarithmic Bayes Factor comparing the model including diagnosis to the null model
+
+as well as `df.exc` (group and number of excluded participants), `df.sht` (outcome of shapiro test for the demographic and questionnaire values) and the results of the contingency tables (`ct.full` and `ct.mf`).
 
 ### `FER_fix.rds`
 
@@ -97,14 +111,6 @@ Data is shared as RDS files which can be read into R. In the following, you can 
 * emo : emotion portrayed in the stimulus (AF = afraid, AN = angry, HA = happy, SA = sadness)
 * AOI : in which area of interest was the last fixation before stopping the video (forehead, eyes, mouth, nose)
 * AOI.code : AOI but coded as numbers
-
-### `FER_table.rds`
-
-* measurement : questionnaire or socio-demographic variable
-* ADHD : mean and standard deviation or counts for the gender identities for the ADHD group
-* ASD : mean and standard deviation or counts for the gender identities for the ASD group
-* COMP : mean and standard deviation or counts for the gender identities for the COMP group
-* logBF10 : logarithmic Bayes Factor comparing the model including diagnosis to the null model
 
 ## Project members
 
