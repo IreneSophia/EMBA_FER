@@ -1,0 +1,11 @@
+#!/bin/bash
+
+while ! [ -f "/home/emba/Documents/EMBA/EMBA-FER_scripts/_brms_SBC_cache/res_FER_last_10.rds" ];
+do 
+
+	Rscript brms-analyses_FER-last-i.R
+	
+done
+
+Rscript log-shutdown.R
+

@@ -1,0 +1,1019 @@
+---
+title: "S3: ET analysis with brms - exploration"
+author: "I. S. Plank"
+date: "`r Sys.Date()`"
+output: html_document
+---
+  
+```{r settings, include=FALSE}
+
+knitr::opts_chunk$set(echo = T, warning = F, message = F, fig.align = 'center', fig.width = 9)
+ls.packages = c("knitr",            # kable
+   "ggplot2",          # plots
+   "brms",# Bayesian lmms
+   "designr",          # simLMM
+   "bridgesampling",   # bridge_sampler
+   "tidyverse",        # tibble stuff
+   "ggpubr",           # ggarrange
+   "ggrain",           # geom_rain
+   "bayesplot",        # plots for posterior predictive checks
+   "SBC", # plots for checking computational faithfulness
+   "rstatix",          # anova
+   "BayesFactor",
+   "tidybayes",
+   "ggdist"
+)
+
+lapply(ls.packages, library, character.only=TRUE)
+
+# set cores
+options(mc.cores = parallel::detectCores())
+
+# graph settings 
+c_light = "#a9afb2"; c_light_highlight = "#8ea5b2"; c_mid = "#6b98b2" 
+c_mid_highlight = "#3585b2"; c_dark = "#0072b2"; c_dark_highlight = "#0058b2" 
+c_green = "#009E73"
+sz = 1
+
+# custom colour palette
+custom.col = c("#0072B2", "#009E73", "#CC79A7", "#56B4E9", "#D55E00")
+
+# settings for the SBC package
+use_cmdstanr = getOption("SBC.vignettes_cmdstanr", TRUE) # Set to false to use rst
+options(brms.backend = "cmdstanr")
+cache_dir = "./_brms_SBC_cache"
+if(!dir.exists(cache_dir)) {
+  dir.create(cache_dir)
+}
+
+# Using parallel processing
+library(future)
+plan(multisession)
+
+# load the function to perform the sensitivity analysis
+source('fun_bf-sens.R')
+
+```
+
+<style type="text/css">
+  .main-container {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
+
+# S3.1 Introduction
+  
+This R Markdown script exploratively analyses eye tracking data from the FER (facial emotion recognition) task of the EMBA project. The data was preprocessed before being read into this script, specifically fixations were extracted and then combined with information on specific areas of interest: eyes, forehead, mouth and nose. 
+
+## Some general settings
+
+```{r set}
+
+# number of simulations
+nsim = 500
+
+# set number of iterations and warmup for models
+iter = 3000
+warm = 1000
+
+# set seed
+set.seed(2468)
+
+```
+
+
+## Package versions
+  
+```{r lib_versions, echo=F}
+
+print(R.Version()$version.string)
+
+for (package in ls.packages) {
+  print(sprintf("%s version %s", package, packageVersion(package)))
+}
+
+```
+
+## Preparation
+
+First, we load the data and combine it with demographic information including the diagnostic status of the subjects. Then, all predictors are set to sum contrasts. 
+
+```{r prep}
+
+# check if the data files exist, if not create them
+if (file.exists("FER_last.rds") & file.exists("FER_first.rds")) {
+  df.last  = readRDS("FER_last.rds")
+  df.first = readRDS("FER_first.rds")
+} else {
+  
+  # set file path
+  dt.path = '/home/emba/Documents/EMBA/BVET'
+  
+  # load the eye tracking data
+  load(file.path(dt.path, "FER_ET_data.RData"))
+  
+  # get demographic information
+  df.sub = read_csv(file.path("/home/emba/Documents/EMBA/CentraXX", "EMBA_centraXX.csv"), show_col_types = F) %>%
+    mutate(
+      diagnosis = recode(diagnosis, "CTR" = "COMP")
+    )
+  
+  # merge first fixations data with diagnosis
+  df.first = merge(df.first, df.sub %>% select(subID, diagnosis), all.x = T) %>%
+    mutate_if(is.character, as.factor) %>%
+    mutate(
+      AOI.code = as.factor(case_when(
+        AOI == "mouth" ~ '4',
+        AOI == "eyes" ~ '3',
+        AOI == "fore" ~ '2', 
+        AOI == "nose" ~ '1'
+      ))
+    ) %>%
+    # only take fixations starting within the first 60 frames
+    filter(pic_start <= 60) %>% droplevels() %>%
+    # anonymise data
+    mutate(
+      subID = as.factor(as.numeric(subID))
+    ) %>% select(-bias)
+  
+  # merge last fixations data with diagnosis
+  df.last = merge(df.last,
+          df.sub, 
+          all.x = T) %>%
+    mutate(
+      AOI.code = as.factor(case_when(
+        AOI == "mouth" ~ '4',
+        AOI == "eyes" ~ '3',
+        AOI == "fore" ~ '2', 
+        AOI == "nose" ~ '1'
+      ))
+    ) %>%
+    # only consider trials where time did not run out
+    filter(frames < 300) %>% 
+    select(subID, video, diagnosis, emo, AOI, AOI.code) %>%
+    mutate_if(is.character, as.factor) %>% droplevels() %>%
+    # anonymise data
+    mutate(
+      subID = as.factor(as.numeric(subID))
+    )
+  
+  # save data
+  saveRDS(df.first, "FER_first.rds")
+  saveRDS(df.last,  "FER_last.rds")
+  
+  # remove data we won't use in this
+  rm(df.fix)
+  rm(df.sac)
+  rm(df.sac.all)
+  rm(df.sub)
+  
+}
+
+# set and print the contrasts
+contrasts(df.last$emo) = contr.sum(4)
+contrasts(df.last$emo)
+contrasts(df.last$diagnosis) = contr.sum(3)
+contrasts(df.last$diagnosis)
+contrasts(df.first$diagnosis) = contr.sum(3)
+contrasts(df.first$diagnosis)
+
+```
+
+We planned to determine the group-level effect subjects following Barr (2013). For each model, experiment specific weakly informative priors were set.
+
+We perform prior predictive checks as proposed in Schad, Betancourt and Vasishth (2020) using the SBC package. To do so, we create `r nsim` simulated datasets where parameters are simulated from the priors. Then, these parameters are used to create one fake dataset. Both the true underlying parameters and the simulated discrimination values are saved. 
+
+Then, we create graphs showing the prior predictive distribution of the simulated discrimination threshold to check whether our priors fit our general expectations about the data. Next, we perform checks of computational faithfulness and model sensitivity as proposed by Schad, Betancourt and Vasishth (2020) and implemented in the SBC package. We create models for each of the simulated datasets. Then, we calculate performance metrics for each of these models, focusing on the population-level parameters. 
+
+# S3.2 AOI of first fixation
+
+We want to explore influences on the first fixation on an AOI (eyes, forehead, nose or mouth) of the stimuli. 
+
+## Explore time to first fixation as possible covariate
+
+```{r time_first}
+
+# aggregate per subject, rank transform to achieve normal distribution
+df.first.agg = df.first %>%
+  group_by(subID, diagnosis) %>%
+  summarise(
+    pic_start = median(pic_start)
+  ) %>%
+  ungroup() %>%
+  mutate(
+    rpic_start = rank(pic_start)
+  )
+
+# check normal distribution
+kable(df.first.agg %>% 
+        group_by(diagnosis) %>%
+        shapiro_test(pic_start, rpic_start) %>%
+        mutate(
+          sig = if_else(p < 0.05, "*", "")
+        )
+      )
+
+# Bayesian ANOVA
+aov.time = anovaBF(rpic_start   ~ diagnosis, data = df.first.agg)
+summary(aov.time)
+
+```
+
+The log BF for the ANOVA of the start of the first fixation is `r sprintf("%.3f", aov.time@bayesFactor[["bf"]])`, meaning there is `r effectsize::interpret_bf(aov.time@bayesFactor[["bf"]], log = T)` a difference between the groups. Therefore, we can assume that the time to first fixation was similar across diagnostic groups. This is also apparent when plotting the data. 
+
+```{r plot_time, fig.height=6}
+
+# rain cloud plot
+a = 0.66
+df.first.agg %>%
+  # convert frames to time
+  mutate(
+    pic_start = pic_start/60
+  ) %>%
+  ggplot(aes(diagnosis, pic_start, fill = diagnosis, colour= diagnosis)) + #
+  geom_rain(rain.side = 'r',
+  boxplot.args = list(color = "black", outlier.shape = NA, show_guide = FALSE, alpha = a),
+  violin.args = list(color = "black", outlier.shape = NA, alpha = a),
+  boxplot.args.pos = list(
+    position = ggpp::position_dodgenudge(x = 0, width = 0.3), width = 0.3
+  ),
+  point.args = list(show_guide = FALSE, alpha = .5),
+  violin.args.pos = list(
+    width = 0.6, position = position_nudge(x = 0.16)),
+  point.args.pos = list(position = ggpp::position_dodgenudge(x = -0.25, width = 0.1))) +
+    scale_fill_manual(values = custom.col) +
+    scale_color_manual(values = custom.col) +
+    ylim(0, 1) +
+    labs(title = "Median time to first fixation", x = "", y = "seconds") +
+    theme_bw() + 
+    theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5), legend.direction = "horizontal", text = element_text(size = 15))
+
+```
+
+## Setting up and assessment of the model
+
+For each trial, we have the first AOI on which the participant fixated. We include diagnosis on the population-level as well as intercept for each subject and intercept and slope for diagnosis for each video. 
+
+```{r model_first}
+
+code = "FER_first"
+
+# set formula
+f.first = brms::bf(AOI.code ~ diagnosis + (1 | subID) + (diagnosis | video))
+
+# set weakly informative priors: fixation cross on nose, so others less likely
+priors = c(
+  prior(normal(-2, 1.5),   class  = "Intercept", dpar = "mu2"),
+  prior(normal(-2, 1.5),   class  = "Intercept", dpar = "mu3"),
+  prior(normal(-2, 1.5),   class  = "Intercept", dpar = "mu4"),
+  prior(normal(0,  1),   class  = "b", dpar = "mu2"),
+  prior(normal(0,  1),   class  = "b", dpar = "mu3"),
+  prior(normal(0,  1),   class  = "b", dpar = "mu4"),
+  prior(normal(0,  1),   class  = "sd", dpar = "mu2"),
+  prior(normal(0,  1),   class  = "sd", dpar = "mu3"),
+  prior(normal(0,  1),   class  = "sd", dpar = "mu4"),
+  prior(lkj(2),         class = cor)
+)
+
+```
+
+```{r priorpc_SBC_first}
+
+if (file.exists(file.path(cache_dir, paste0("df_res_", code, ".rds")))) {
+  # load in the results of the SBC
+  df.results = readRDS(file.path(cache_dir, paste0("df_res_", code, ".rds")))
+  df.backend = readRDS(file.path(cache_dir, paste0("df_div_", code, ".rds")))
+  dat        = readRDS(file.path(cache_dir, paste0("dat_", code, ".rds")))
+} else {
+  # create the data and the results
+  gen  = SBC_generator_brms(f.first, data = df.first, prior = priors, family = categorical,
+                            thin = 50, warmup = 20000, refresh = 2000)
+  dat = generate_datasets(gen, nsim) 
+  saveRDS(dat, file = file.path(cache_dir, paste0("dat_", code, ".rds")))
+  bck = SBC_backend_brms_from_generator(gen, chains = 4, thin = 1,
+                                        inits = 0.1, warmup = warm, iter = iter)
+  res = compute_SBC(dat, bck,
+       cache_mode     = "results", 
+       cache_location = file.path(cache_dir, paste0("res_", code)))
+  saveRDS(res$stats, file = file.path(cache_dir, paste0("df_res_", code, ".rds")))
+  saveRDS(res$backend_diagnostics, file = file.path(cache_dir, paste0("df_div_", code, ".rds")))
+}
+
+```
+
+We start by investigating the Rhats and the number of divergent samples. This shows that `r nrow(df.results %>% group_by(sim_id) %>% summarise(rhat = max(rhat, na.rm = T)) %>% filter(rhat >= 1.05))` of `r max(df.results$sim_id)` simulations had at least one parameter that had an rhat of at least 1.05. Additionally, `r nrow(df.backend %>% filter(n_divergent > 0))` models had divergent samples (mean number of samples of the simulations with divergent samples: `r as.numeric(df.backend %>% filter(n_divergent > 0) %>% summarise(n_divergent = mean(n_divergent)))`).
+
+Next, we can plot the simulated values to perform prior predictive checks as well as check the results of our SBC.
+
+```{r priorpc_SBC_first2, fig.height=18}
+
+# create a matrix out of generated data
+dvname = gsub(" ", "", gsub("[\\|~].*", "", f.first)[1])
+dvfakemat = matrix(NA, nrow(dat[['generated']][[1]]), length(dat[['generated']])) 
+for (i in 1:length(dat[['generated']])) {
+  dvfakemat[,i] = dat[['generated']][[i]][[dvname]]
+}
+
+truePars = dat[['variables']]
+
+# compute one histogram per simulated data-set 
+binwidth = 1 
+breaks = seq(0, max(dvfakemat, na.rm=T), binwidth) 
+histmat = matrix(NA, ncol = nrow(truePars), nrow = length(breaks)-1) 
+for (i in 1:nrow(truePars)) {
+  histmat[,i] = hist(dvfakemat[,i], breaks = breaks, plot = F)$counts 
+}
+# for each bin, compute quantiles across histograms 
+probs = seq(0.1, 0.9, 0.1) 
+quantmat= as.data.frame(matrix(NA, nrow=dim(histmat)[1], ncol = length(probs)))
+names(quantmat) = paste0("p", probs)
+for (i in 1:dim(histmat)[1]) {
+  quantmat[i,] = quantile(histmat[i,], p = probs)
+}
+quantmat$x = c("nose", "mouth", "forehead", "eyes")
+pf0 = ggplot(data = quantmat, aes(x = x)) + 
+  geom_bar(aes(y = p0.9), fill = c_light, stat = "identity") + 
+  geom_bar(aes(y = p0.8), fill = c_light_highlight, stat = "identity") + 
+  geom_bar(aes(y = p0.7), fill = c_mid, stat = "identity") + 
+  geom_bar(aes(y = p0.6), fill = c_mid_highlight, stat = "identity") + 
+  geom_bar(aes(y = p0.5), fill = c_dark, stat = "identity") + 
+  labs(title = "Prior predictive distribution", y = "", x = "") +
+  theme_bw()
+
+# get simulation numbers with issues
+check = merge(df.results %>%
+                mutate(correct_max_rank = max(max_rank)) %>%
+                group_by(sim_id, correct_max_rank, max_rank) %>% 
+                summarise(rhat = max(rhat, na.rm = T)) %>% 
+                filter(rhat >= 1.05 | max_rank < correct_max_rank), 
+              df.backend %>% filter(n_divergent > 0), all = T)
+df.results.b = df.results %>% 
+  filter(substr(variable, 1, 2) == "b_") %>% 
+  filter(!(sim_id %in% check$sim_id))
+
+# plot SBC with functions from the SBC package
+p1 = plot_ecdf_diff(df.results.b) +
+  theme_bw() + theme(legend.position = "none")
+p2 = plot_rank_hist(df.results.b, bins = 20) +
+  theme_bw()
+p3 = plot_sim_estimated(df.results.b, alpha = 0.5) +
+  theme_bw()
+p4 = plot_contraction(df.results.b, 
+         prior_sd = setNames(rep(2, length(unique(df.results.b$variable))), 
+   unique(df.results.b$variable))) +
+  theme_bw()
+
+p = ggarrange(pf0, 
+ p1, p2, 
+ p3, p4, labels = "AUTO", nrow = 5, heights = c(2, 3, 3, 3, 3))
+annotate_figure(p, top = text_grob("Prior predictive checks and SBC", face = "bold", size = 14))
+
+
+```
+
+First, we check the distribution of the simulated data. We iteratively tried out priors to achieve that all AOIs are equally likely. 
+
+Second, we check the ranks of the parameters. If the model is unbiased, these should be uniformly distributed (Schad, Betancourt and Vasishth, 2020). The sample empirical cumulative distribution function (ECDF) lies within the theoretical distribution (95%) and the rank histogram also shows ranks within the 95% expected range, although there are some small deviations. We judge this to be acceptable.
+
+Third, we investigated the relationship between the simulated true parameters and the posterior estimates. Although there are individual values diverging from the expected pattern, most parameters were recovered successfully within an uncertainty interval of alpha = 0.05. 
+
+Last, we explore the z-score and the posterior contraction of our population-level predictors. The z-score "determines the distance of the posterior mean from the true simulating parameter", while the posterior contraction "estimates how much prior uncertainty is reduced in the posterior estimation" (Schad, Betancourt and Vasisth, 2020). Both look good. 
+
+## Posterior predictive checks
+
+As the next step, we fit the model and check whether the chains have converged, which they seem to have. We then perform posterior predictive checks on the model using the bayesplot package.
+
+```{r postpc_first, message=T, fig.height=6}
+
+# fit the model 
+m.first = brm(f.first,
+              df.first, prior = priors,
+              iter = iter, warmup = warm,
+              backend = "cmdstanr", threads = threading(8),
+              file = "m_first_final",
+              family = "categorical", 
+              save_pars = save_pars(all = TRUE)
+              )
+rstan::check_hmc_diagnostics(m.first$fit)
+
+# check that rhats are below 1.01
+sum(brms::rhat(m.first) >= 1.01, na.rm = T)
+
+# check the trace plots
+post.draws = as_draws_df(m.first)
+mcmc_trace(post.draws, regex_pars = "^b_",
+           facet_args = list(ncol = 4)) +
+  scale_x_continuous(breaks=scales::pretty_breaks(n = 3)) +
+  scale_y_continuous(breaks=scales::pretty_breaks(n = 3))
+
+```
+
+This model has no divergent samples, and no rhats that are higher or equal to 1.01. Therefore, we go ahead and perform our posterior predictive checks.
+
+```{r postpc2_first, fig.height=6}
+
+# get the posterior predictions
+post.pred = posterior_predict(m.first, ndraws = nsim)
+
+# check the fit of the predicted data compared to the real data
+p1 = pp_check(m.first, ndraws = nsim, type = 'bars') + 
+  theme_bw() + theme(legend.position = "none") +
+  scale_x_continuous(name = "", breaks = c(1, 2, 3, 4), labels = c("nose", "mouth", "forehead", "eyes"))
+
+# distributions of means and sds compared to the real values per group
+p2 = ppc_bars_grouped(as.numeric(df.first$AOI.code), post.pred, df.first$diagnosis) + 
+  theme_bw() + theme(legend.position = "none") +
+  scale_x_continuous(name = "", breaks = c(1, 2, 3, 4), labels = c("nose", "mouth", "forehead", "eyes"))
+
+p = ggarrange(p1, p2,
+nrow = 2, ncol = 1, labels = "AUTO")
+annotate_figure(p, top = text_grob("Posterior predictive checks: first fixations", face = "bold", size = 14))
+
+```
+
+The predictions based on the model capture the data very well, both overall and for the three diagnostic groups. 
+
+## Inferences and plots
+
+Now that we are convinced that we can trust our model, we have a look at the model and its estimates.
+
+```{r final_first, fig.height=6}
+
+# print a summary
+summary(m.first)
+
+# plot the estimates
+as_draws_df(m.first) %>% 
+  select(starts_with("b_")) %>%
+  mutate(
+    b_mu2_COMP = - b_mu2_diagnosis1 - b_mu2_diagnosis2,
+    b_mu3_COMP = - b_mu3_diagnosis1 - b_mu3_diagnosis2,
+    b_mu4_COMP = - b_mu4_diagnosis1 - b_mu4_diagnosis2
+  ) %>%
+  pivot_longer(cols = starts_with("b_"), names_to = "coef", values_to = "estimate") %>%
+  mutate(
+    coef = substr(coef, 3, nchar(coef)),
+    coef = str_replace_all(coef, ":", " x "),
+    coef = str_replace_all(coef, "mu2_", "mouth: "),
+    coef = str_replace_all(coef, "mu3_", "forehead: "),
+    coef = str_replace_all(coef, "mu4_", "eyes: "),
+    coef = str_replace_all(coef, "diagnosis1", "ADHD"),
+    coef = str_replace_all(coef, "diagnosis2", "ASD"),
+    coef = fct_reorder(coef, desc(estimate))
+  ) %>% 
+  group_by(coef) %>%
+  mutate(
+    cred = case_when(
+      (mean(estimate) < 0 & quantile(estimate, probs = 0.975) < 0) |
+        (mean(estimate) > 0 & quantile(estimate, probs = 0.025) > 0) ~ "credible",
+      T ~ "not credible"
+    )
+  ) %>% ungroup() %>%
+  ggplot(aes(x = estimate, y = coef, fill = cred)) +
+  geom_vline(xintercept = 0, linetype = 'dashed') +
+  ggdist::stat_halfeye(alpha = 0.7) + ylab(NULL) + theme_bw() +
+  scale_fill_manual(values = c(c_dark, c_light)) + theme(legend.position = "none")
+
+```
+
+Since this is a categorical model, the reference category was automatically set to AOI1 which corresponds to the nose and all estimates are log odds with respect to this category. This makes the interpretation of the estimates themselves a bit trickier. Therefore, we plot the estimated mean score corresponding to each diagnosis (thanks to Solomon who suggested this!) based on the model together with the actual data.
+
+```{r plot_first, fig.height=4}
+
+a = 0.66
+
+# add epreds
+df.first.epred = df.first %>% 
+  tidyr::expand(diagnosis, AOI.code) %>%
+  add_epred_draws(m.first, re_formula = NA)
+
+# create a plot
+df.first.epred %>% 
+  ggplot() +
+  geom_col(data = df.first %>% group_by(diagnosis) %>% count(AOI.code) %>% mutate(probability = n / sum(n)),
+           aes(x = AOI.code, y = probability, group = diagnosis, fill = diagnosis), 
+           width = 0.8, position= "dodge", alpha = a, colour = "black") +
+  stat_pointinterval(aes(x = .category, y = .epred, group = diagnosis, fill = diagnosis),
+                     point_size = 2, position = position_dodge(width = 0.8), show.legend = FALSE) + 
+  scale_fill_manual(values = custom.col) +
+  scale_color_manual(values = custom.col) +
+  theme_bw() + ylim(0, 1) +
+  theme(legend.position = "right") + labs(title = "Expectations based on the model on top of real data", y = "percentage") +
+  scale_x_discrete(
+    "AOI",
+    labels = c(
+      "1" = "nose",
+      "2" = "forehead",
+      "3" = "eyes",
+      "4" = "mouth"
+    )
+  )
+
+```
+
+## Bayes factor analysis
+
+We perform a Bayes Factor analysis with models excluding our predictor diagnosis. To ensure that the BF is stable, we perform our analysis with wider and narrower priors.  
+
+```{r bf_first, fig.height=4}
+
+# set the directory in which to save results
+sense_dir = file.path(getwd(), "_brms_sens_cache")
+main.code = "first"
+
+# describe priors
+pr.descriptions = c("chosen",
+  "sdx1.25",  "sdx1.5",  "sdx2",    "sdx4",   "sdx6",     "sdx8",     "sdx10", 
+  "sdx0.875", "sdx0.75", "sdx0.5", "sdx0.25", "sdx0.167", "sdx0.125", "sdx0.1"
+  )
+
+# check which have been run already
+if (file.exists(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)))) {
+  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F) %>%
+    select(priors) %>% distinct()
+  pr.descriptions = pr.descriptions[!(pr.descriptions %in% pr.done$priors)]
+}
+
+if (length(pr.descriptions) > 0) {
+  # fit the model again > lots of iterations to allow for BF computation
+  m.first.bf = brm(f.first,
+                df.first, prior = priors,
+                iter = 40000, warmup = 10000,
+                backend = "cmdstanr", threads = threading(8),
+                file = "m_first_bf",
+                family = "categorical", 
+                save_pars = save_pars(all = TRUE)
+                )
+}
+
+# loop through them
+for (pr.desc in pr.descriptions) {
+  # use the function
+  bf_sens_1pred(m.first.bf, "diagnosis", pr.desc, 
+          main.code, # prefix for all models and MLL
+          file.path("./logfiles", "log_FER_first.txt"), # log file
+          sense_dir # where to save the models and MLL
+          )
+}
+
+# read in the results
+df.first.bf = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F)
+
+# check the sensitivity analysis result per model
+df.first.bf %>%
+  filter(`population-level` != "1") %>%
+  mutate(
+    sd = as.factor(case_when(
+      priors == "chosen" ~ "1", 
+      substr(priors, 1, 3) == "sdx" ~ gsub("sdx", "", priors),
+      T ~ priors)
+      ),
+    order = case_when(
+      priors == "chosen" ~ 1, 
+      substr(priors, 1, 3) == "sdx" ~ as.numeric(gsub("sdx", "", priors)),
+      T ~ 999),
+    sd = fct_reorder(sd, order)
+  ) %>%
+  ggplot(aes(y = bf.log, x = sd, group = `population-level`, colour = `population-level`)) + 
+  geom_point() +
+  geom_line() + 
+  ggtitle("Sensitivity analysis with the intercept-only model as reference") +
+  geom_vline(xintercept = "1") +
+  geom_hline(yintercept = 0) +
+  theme_bw() +
+  scale_colour_manual(values = custom.col) + 
+  theme(legend.position = "none", axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+
+The log Bayes Factor indicates no differences between diagnostic groups. 
+
+# S3.3 AOI of last fixation
+
+We also want to explore influences on the last fixation on an AOI (eyes, forehead, nose or mouth) of the stimuli, before participants actively stopped the video because they believed to have recognised the emotion. 
+
+## Setting up and assessment of the model
+
+For each trial, we have the last AOI on which the participant fixated. We include diagnosis, emotion and their interaction on the population-level as well as intercept and slopes for emotions for each subject and intercept and slope for diagnosis for each video. 
+
+```{r model_last}
+
+code = "FER_last"
+
+# set formula
+f.last = brms::bf(AOI.code ~ diagnosis * emo + (emo | subID) + (diagnosis | video))
+
+# set weakly informative priors: less difference but still nose slightly more likely
+priors = c(
+  prior(normal(-1.5, 2),   class  = "Intercept", dpar = "mu2"),
+  prior(normal(-1.5, 2),   class  = "Intercept", dpar = "mu3"),
+  prior(normal(-1.5, 2),   class  = "Intercept", dpar = "mu4"),
+  prior(normal(0,  1),   class  = "b", dpar = "mu2"),
+  prior(normal(0,  1),   class  = "b", dpar = "mu3"),
+  prior(normal(0,  1),   class  = "b", dpar = "mu4"),
+  prior(normal(0,  1),   class  = "sd", dpar = "mu2"),
+  prior(normal(0,  1),   class  = "sd", dpar = "mu3"),
+  prior(normal(0,  1),   class  = "sd", dpar = "mu4"),
+  prior(lkj(2),         class = cor)
+)
+
+```
+
+```{r priorpc_SBC_last}
+
+if (file.exists(file.path(cache_dir, paste0("df_res_", code, ".csv")))) {
+  # load in the results of the SBC
+  df.results = read_csv(file = file.path(cache_dir, paste0("df_res_", code, ".csv")))
+  df.backend = readRDS(file.path(cache_dir, paste0("df_div_", code, ".rds")))
+  dat        = readRDS(file.path(cache_dir, paste0("dat_", code, ".rds")))
+} else {
+  # create the data and the results
+  gen  = SBC_generator_brms(f.last, data = df.last, prior = priors, family = categorical,
+  thin = 50, warmup = 20000, refresh = 2000)
+  dat = generate_datasets(gen, nsim) 
+  saveRDS(dat, file = file.path(cache_dir, paste0("dat_", code, ".rds")))
+  bck = SBC_backend_brms_from_generator(gen, chains = 4, thin = 1,
+                                        inits = 0.1, warmup = warm, iter = iter)
+  res = compute_SBC(dat, bck,
+       cache_mode     = "results", 
+       cache_location = file.path(cache_dir, paste0("res_", code)))
+  write_csv(res$stats, file = file.path(cache_dir, paste0("df_res_", code, ".csv"))) # otherwise this file is too large!!!
+  saveRDS(res$backend_diagnostics, file = file.path(cache_dir, paste0("df_div_", code, ".rds")))
+}
+
+```
+
+We start by investigating the Rhats and the number of divergent samples. This shows that `r nrow(df.results %>% group_by(sim_id) %>% summarise(rhat = max(rhat, na.rm = T)) %>% filter(rhat >= 1.05))` of `r max(df.results$sim_id)` simulations had at least one parameter that had an rhat of at least 1.05. Additionally, `r nrow(df.backend %>% filter(n_divergent > 0))` models had divergent samples (mean number of samples of the simulations with divergent samples: `r as.numeric(df.backend %>% filter(n_divergent > 0) %>% summarise(n_divergent = mean(n_divergent)))`). This looks good and we proceed to plotting the simulated values to perform prior predictive checks as well as check the results of our SBC.
+
+```{r priorpc_SBC_last2, fig.height=24}
+
+# create a matrix out of generated data
+dvname = gsub(" ", "", gsub("[\\|~].*", "", f.last)[1])
+dvfakemat = matrix(NA, nrow(dat[['generated']][[1]]), length(dat[['generated']])) 
+for (i in 1:length(dat[['generated']])) {
+  dvfakemat[,i] = dat[['generated']][[i]][[dvname]]
+}
+
+truePars = dat[['variables']]
+
+# compute one histogram per simulated data-set 
+binwidth = 1 
+breaks = seq(0, max(dvfakemat, na.rm=T), binwidth) 
+histmat = matrix(NA, ncol = nrow(truePars), nrow = length(breaks)-1) 
+for (i in 1:nrow(truePars)) {
+  histmat[,i] = hist(dvfakemat[,i], breaks = breaks, plot = F)$counts 
+}
+# for each bin, compute quantiles across histograms 
+probs = seq(0.1, 0.9, 0.1) 
+quantmat= as.data.frame(matrix(NA, nrow=dim(histmat)[1], ncol = length(probs)))
+names(quantmat) = paste0("p", probs)
+for (i in 1:dim(histmat)[1]) {
+  quantmat[i,] = quantile(histmat[i,], p = probs)
+}
+quantmat$x = c("nose", "mouth", "forehead", "eyes")
+pl0 = ggplot(data = quantmat, aes(x = x)) + 
+  geom_bar(aes(y = p0.9), fill = c_light, stat = "identity") + 
+  geom_bar(aes(y = p0.8), fill = c_light_highlight, stat = "identity") + 
+  geom_bar(aes(y = p0.7), fill = c_mid, stat = "identity") + 
+  geom_bar(aes(y = p0.6), fill = c_mid_highlight, stat = "identity") + 
+  geom_bar(aes(y = p0.5), fill = c_dark, stat = "identity") + 
+  labs(title = "Prior predictive distribution", y = "", x = "") +
+  theme_bw()
+
+# get simulation numbers with issues
+check = merge(df.results %>%
+                mutate(correct_max_rank = max(max_rank)) %>%
+                group_by(sim_id, correct_max_rank, max_rank) %>% 
+                summarise(rhat = max(rhat, na.rm = T)) %>% 
+                filter(rhat >= 1.05 | max_rank < correct_max_rank), 
+              df.backend %>% filter(n_divergent > 0), all = T)
+df.results.b = df.results %>% 
+  filter(substr(variable, 1, 2) == "b_") %>% 
+  filter(!(sim_id %in% check$sim_id))
+
+# plot SBC with functions from the SBC package
+p1 = plot_ecdf_diff(df.results.b) +
+  theme_bw() + theme(legend.position = "none")
+p2 = plot_rank_hist(df.results.b, bins = 20) +
+  theme_bw()
+p3 = plot_sim_estimated(df.results.b, alpha = 0.5) +
+  theme_bw()
+p4 = plot_contraction(df.results.b, 
+         prior_sd = setNames(rep(2, length(unique(df.results.b$variable))), 
+   unique(df.results.b$variable))) +
+  theme_bw()
+
+p = ggarrange(pl0, 
+ p1, p2, 
+ p3, p4, labels = "AUTO", nrow = 5, heights = c(1, 2, 2, 2, 2))
+annotate_figure(p, top = text_grob("Prior predictive checks and SBC", face = "bold", size = 14))
+
+
+```
+
+First, we check the distribution of the simulated data. We set the priors so that all AOIs were equally likely to be fixated on except for the nose which we assumed to be more likely. 
+
+Second, we check the ranks of the parameters. If the model is unbiased, these should be uniformly distributed (Schad, Betancourt and Vasishth, 2020). The sample empirical cumulative distribution function (ECDF) lies within the theoretical distribution (95%) and the rank histogram also shows ranks within the 95% expected range, although there are some small deviations. We judge this to be acceptable.
+
+Third, we investigated the relationship between the simulated true parameters and the posterior estimates. Although there are individual values diverging from the expected pattern, most parameters were recovered successfully within an uncertainty interval of alpha = 0.05. 
+
+Last, we explore the z-score and the posterior contraction of our population-level predictors. The z-score "determines the distance of the posterior mean from the true simulating parameter", while the posterior contraction "estimates how much prior uncertainty is reduced in the posterior estimation" (Schad, Betancourt and Vasisth, 2020). It all looks good. 
+
+## Posterior predictive checks
+
+As the next step, we fit the model and check whether the chains have converged, which they seem to have. We then perform posterior predictive checks on the model using the bayesplot package.
+
+```{r postpc_last, message=T, fig.height=14}
+
+# fit the model
+m.last = brm(f.last,
+              df.last, prior = priors,
+              iter = iter, warmup = warm,
+              backend = "cmdstanr", threads = threading(8),
+              file = "m_last_final",
+              family = "categorical"
+              )
+rstan::check_hmc_diagnostics(m.last$fit)
+
+# check that rhats are below 1.01
+sum(brms::rhat(m.last) >= 1.01, na.rm = T)
+
+# check the last 10000 iterations in trace plots
+post.draws = as_draws_df(m.last)
+mcmc_trace(post.draws, regex_pars = "^b_",
+           facet_args = list(ncol = 4)) +
+  scale_x_continuous(breaks=scales::pretty_breaks(n = 3)) +
+  scale_y_continuous(breaks=scales::pretty_breaks(n = 3))
+
+```
+
+This model has no divergent samples, and no rhats that are higher or equal to 1.01. Therefore, we go ahead and perform our posterior predictive checks. 
+
+```{r postpc2_last, fig.height=6}
+
+# get the posterior predictions
+post.pred = posterior_predict(m.last, ndraws = nsim)
+
+# check the fit of the predicted data compared to the real data
+p1 = pp_check(m.last, ndraws = nsim, type = 'bars') + 
+  theme_bw() + theme(legend.position = "none") +
+  scale_x_continuous(name = "", breaks = c(1, 2, 3, 4), labels = c("nose", "mouth", "forehead", "eyes"))
+
+# distributions of means compared to the real values per group
+p2 = ppc_bars_grouped(as.numeric(df.last$AOI.code), post.pred, df.last$diagnosis) + 
+  theme_bw() + theme(legend.position = "none") +
+  scale_x_continuous(name = "", breaks = c(1, 2, 3, 4), labels = c("nose", "mouth", "forehead", "eyes"))
+
+p = ggarrange(p1, p2,
+nrow = 2, ncol = 1, labels = "AUTO")
+annotate_figure(p, top = text_grob("Posterior predictive checks: last fixations", face = "bold", size = 14))
+
+```
+
+The predictions based on the model capture the data very well, both overall and for the three diagnostic groups. 
+
+## Inferences and plots
+
+Now that we are convinced that we can trust our model, we have a look at the model and its estimates.
+
+```{r final_last, fig.height=14}
+
+# print a summary
+summary(m.last)
+
+# plot the posterior distributions:
+as_draws_df(m.last) %>% 
+  select(starts_with("b_")) %>%
+  mutate(
+    b_mu2_COMP = - b_mu2_diagnosis1 - b_mu2_diagnosis2,
+    b_mu3_COMP = - b_mu3_diagnosis1 - b_mu3_diagnosis2,
+    b_mu4_COMP = - b_mu4_diagnosis1 - b_mu4_diagnosis2,
+    b_mu2_sadness = - b_mu2_emo1 - b_mu2_emo2 - b_mu2_emo3,
+    b_mu3_sadness = - b_mu3_emo1 - b_mu3_emo2 - b_mu3_emo3,
+    b_mu4_sadness = - b_mu4_emo1 - b_mu4_emo2 - b_mu4_emo3,
+  ) %>%
+  pivot_longer(cols = starts_with("b_"), names_to = "coef", values_to = "estimate") %>%
+  mutate(
+    coef = substr(coef, 3, nchar(coef)),
+    coef = str_replace_all(coef, ":", " x "),
+    coef = str_replace_all(coef, "mu2_", "mouth: "),
+    coef = str_replace_all(coef, "mu3_", "forehead: "),
+    coef = str_replace_all(coef, "mu4_", "eyes: "),
+    coef = str_replace_all(coef, "diagnosis1", "ADHD"),
+    coef = str_replace_all(coef, "diagnosis2", "ASD"),
+    coef = str_replace_all(coef, "emo1", "fear"),
+    coef = str_replace_all(coef, "emo2", "anger"),
+    coef = str_replace_all(coef, "emo3", "happiness"),
+    coef = fct_reorder(coef, desc(estimate))
+  ) %>% 
+  group_by(coef) %>%
+  mutate(
+    cred = case_when(
+      (mean(estimate) < 0 & quantile(estimate, probs = 0.975) < 0) |
+        (mean(estimate) > 0 & quantile(estimate, probs = 0.025) > 0) ~ "credible",
+      T ~ "not credible"
+    )
+  ) %>% ungroup() %>%
+  ggplot(aes(x = estimate, y = coef, fill = cred)) +
+  geom_vline(xintercept = 0, linetype = 'dashed') +
+  ggdist::stat_halfeye(alpha = 0.7) + ylab(NULL) + theme_bw() +
+  scale_fill_manual(values = c(c_dark, c_light)) + theme(legend.position = "none")
+
+```
+
+Again, the nose is the reference AOI for this model. The estimates suggest a difference between the AOIs as well as an influence of emotion. We will create some plots to help us interpret these results. 
+
+```{r plot_last, fig.height=6}
+
+a = 0.66
+
+# add epreds
+df.last.epred = df.last %>% 
+  tidyr::expand(diagnosis, emo, AOI.code) %>%
+  add_epred_draws(m.last, re_formula = NA)
+
+# create a plots
+df.last.epred %>%
+  mutate(
+    emotion = fct_recode(emo, "fear" = "AF", "anger" = "AN", "happiness" = "HA", "sadness" = "SA")
+    ) %>% 
+  ggplot() +
+  geom_col(data = df.last %>% group_by(diagnosis, emo) %>% count(AOI.code) %>% mutate(probability = n / sum(n)),
+           aes(x = AOI.code, y = probability, group = diagnosis, fill = diagnosis), 
+           width = 0.8, position= "dodge", alpha = a, colour = "black") +
+  stat_pointinterval(aes(x = .category, y = .epred, group = diagnosis, fill = diagnosis),
+                     point_size = 2, position = position_dodge(width = 0.8), show.legend = FALSE) + 
+  scale_fill_manual(values = custom.col) +
+  scale_color_manual(values = custom.col) +
+  theme_bw() + ylim(0, 1) +
+  theme(legend.position = "bottom") + 
+  labs(title = "Expectations based on the model on top of real data", y = "percentage") +
+  facet_wrap(. ~ emo) +
+  scale_x_discrete(
+    "AOI",
+    labels = c(
+      "1" = "nose",
+      "2" = "forehead",
+      "3" = "eyes",
+      "4" = "mouth"
+    )
+  )
+
+df.last %>% group_by(diagnosis, emo) %>% count(AOI.code) %>% 
+  mutate(probability = n / sum(n)
+    ) %>% 
+  ggplot() +
+  geom_col(aes(x = AOI.code, y = probability, group = emo, fill = emo), 
+           width = 0.8, position= "dodge", alpha = a, colour = "black") +
+  stat_pointinterval(data = df.last.epred,
+           aes(x = .category, y = .epred, group = emo, fill = emo),
+                     point_size = 2, position = position_dodge(width = 0.8), show.legend = FALSE) + 
+  scale_fill_manual(values = custom.col, labels = c("fear", "anger", "happiness", "sadness")) +
+  theme_bw() + ylim(0, 1) +
+  theme(legend.position = "bottom") + 
+  labs(title = "Expectations based on the model on top of real data", y = "percentage") +
+  facet_wrap(diagnosis ~ ., ncol = 1) +
+  scale_x_discrete(
+    "AOI",
+    labels = c(
+      "1" = "nose",
+      "2" = "forehead",
+      "3" = "eyes",
+      "4" = "mouth"
+    )
+  ) + 
+  guides(fill = guide_legend(title = "emotion")) 
+
+```
+
+Again, these plots show stark differences between the four AOIs. The last AOI to be fixated on does not seem to differ between the diagnostic groups, but it might differ between the emotions. 
+
+## Bayes factor analysis
+
+To investigate this further, we perform a Bayes Factor analysis with models excluding some of our population-level predictors. The group-level predictors stay the same and we perform a sensitivity analysis by widening and narrowing the standard deviations of our priors. 
+
+```{r bf_last, error=T, fig.height=4}
+
+# set the directory in which to save results
+sense_dir = file.path(getwd(), "_brms_sens_cache")
+main.code = "last"
+
+# describe priors
+pr.descriptions = c("chosen",
+  "sdx1.25",  "sdx1.5",  "sdx2",    "sdx4",   "sdx6",     "sdx8",     "sdx10", 
+  "sdx0.875", "sdx0.75", "sdx0.5", "sdx0.25", "sdx0.167", "sdx0.125", "sdx0.1"
+  )
+
+# check which have been run already
+if (file.exists(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)))) {
+  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F)
+  # check if the chosen priors worked before
+  pr.chosen = pr.done %>% filter(priors == "chosen" & 
+                                   grepl("no MLL", `population-level`))
+  if (nrow(pr.chosen) > 0) {
+    pr.descriptions = "chosen"
+  } else {
+    pr.done = pr.done %>%
+      select(priors) %>% distinct()
+    pr.descriptions = pr.descriptions[!(pr.descriptions %in% pr.done$priors)]
+  }
+}
+
+if (length(pr.descriptions) > 0) {
+  # fit the model again > lots of iterations to allow for BF computation
+  m.last.bf = brm(f.last,
+                df.last, prior = priors,
+                iter = 40000, warmup = 10000,
+                backend = "cmdstanr", threads = threading(8),
+                file = "m_last_bf",
+                family = "categorical", 
+                save_pars = save_pars(all = TRUE)
+                )
+}
+
+# loop through them
+for (pr.desc in pr.descriptions) {
+  tryCatch({
+    # use the function
+    bf_sens_2int(m.last.bf, "diagnosis", "emo", pr.desc, 
+                 main.code, # prefix for all models and MLL
+                 file.path("./logfiles", "log_FER_last.txt"), # log file
+                 sense_dir, # where to save the models and MLL
+                 reps = 5
+    )
+  },
+  error = function(err) {
+    message(sprintf("Error for %s: %s", pr.desc, err))
+  }
+  )
+}
+
+# read in the results
+df.last.bf = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F) %>%
+  filter(!grepl("model", `population-level`))
+
+# check the sensitivity analysis result per model
+df.last.bf %>%
+  filter(`population-level` != "1") %>%
+  mutate(
+    sd = as.factor(case_when(
+      priors == "chosen" ~ "1", 
+      substr(priors, 1, 3) == "sdx" ~ gsub("sdx", "", priors),
+      T ~ priors)
+      ),
+    order = case_when(
+      priors == "chosen" ~ 1, 
+      substr(priors, 1, 3) == "sdx" ~ as.numeric(gsub("sdx", "", priors)),
+      T ~ 999),
+    sd = fct_reorder(sd, order)
+  ) %>%
+  ggplot(aes(y = bf.log, x = sd, group = `population-level`, colour = `population-level`)) + 
+  geom_point() +
+  geom_line() + 
+  ggtitle("Sensitivity analysis with the intercept-only model as reference") +
+  geom_vline(xintercept = "1") +
+  theme_bw() +
+  scale_colour_manual(values = custom.col) + 
+  theme(legend.position = "bottom", axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+
+The model only containing diagnosis has by far the lowest Bayes Factor in comparison with the intercept-only model. Therefore, we now use the model containing both diagnosis and emotion but no interaction as the new reference model to compare this model with the model only including emotion and the model including both predictors and their interaction. 
+
+```{r bf_last2, fig.height=4}
+
+# compare to main effects model as reference
+df.last.bf %>%
+  filter(`population-level` != "1") %>%
+  group_by(priors) %>%
+  mutate(bf.log = bf.log - bf.log[`population-level` == "diagnosis + emo"]) %>%
+  ungroup() %>%
+  filter(`population-level` != "diagnosis") %>%
+  mutate(
+    sd = as.factor(case_when(
+      priors == "chosen" ~ "1", 
+      substr(priors, 1, 3) == "sdx" ~ gsub("sdx", "", priors),
+      T ~ priors)
+    ),
+    order = case_when(
+      priors == "chosen" ~ 1, 
+      substr(priors, 1, 3) == "sdx" ~ as.numeric(gsub("sdx", "", priors)),
+      T ~ 999),
+    sd = fct_reorder(sd, order)
+  ) %>%
+  ggplot(aes(y = bf.log, x = sd, group = `population-level`, colour = `population-level`)) + 
+  geom_point() +
+  geom_line() + 
+  geom_vline(xintercept = "1") +
+  theme_bw() +
+  ggtitle("Sensitivity analysis with the 'diagnosis + emotion' model as reference") +
+  scale_colour_manual(values = c(custom.col[2], custom.col[3], custom.col[4])) +
+  theme(legend.position = c(0.2, 0.25), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+kable(df.last.bf %>% filter(priors == "chosen" & `population-level` != "1") %>% arrange(desc(bf.log)))
+
+```
+
+This indicates that the model containing emotion fits our data best across a wide array of priors. 
