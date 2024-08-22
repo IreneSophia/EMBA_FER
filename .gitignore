@@ -1,4 +1,5 @@
 /_brms_SBC_cache/res_*.rds
 /_brms_SBC_cache/dat_*.rds
+/_brms_SBC_cache/*_large.rds
 /_brms_sens_cache/*.rds
 /*_bf.rds
