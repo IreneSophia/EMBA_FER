@@ -409,7 +409,7 @@ annotate_figure(p, top = text_grob("Prior predictive checks", face = "bold", siz
 
 ```
 
-Subfigure B shows the distribution of the simulated data with bluer bands being more likely than greyer bands. It shows a very general distribution that fits the limits of the task. The same applies to the distribution of the means and standard deviations in the simulated datasets. We go ahead with these priors and check the results of the SBC. We only plot the results from the models that had no divergence issues. 
+Subfigure A shows the distribution of the simulated data with bluer bands being more likely than greyer bands. It shows a very general distribution that fits the limits of the task. The same applies to the distribution of the means and standard deviations in the simulated datasets. We go ahead with these priors and check the results of the SBC. We only plot the results from the models that had no divergence issues. 
 
 ```{r sbc_checks3, fig.height=12}
 
