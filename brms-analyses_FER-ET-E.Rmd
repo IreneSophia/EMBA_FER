@@ -183,9 +183,9 @@ contrasts(df.first$diagnosis)
 
 We planned to determine the group-level effect subjects following Barr (2013). For each model, experiment specific weakly informative priors were set.
 
-We perform prior predictive checks as proposed in Schad, Betancourt and Vasishth (2020) using the SBC package. To do so, we create `r nsim` simulated datasets where parameters are simulated from the priors. Then, these parameters are used to create one fake dataset. Both the true underlying parameters and the simulated discrimination values are saved. 
+We perform prior predictive checks as proposed in Schad, Betancourt and Vasishth (2020) using the SBC package. To do so, we create `r nsim` simulated datasets where parameters are simulated from the priors. Then, these parameters are used to create one fake dataset. Both the true underlying parameters and the simulated values are saved. 
 
-Then, we create graphs showing the prior predictive distribution of the simulated discrimination threshold to check whether our priors fit our general expectations about the data. Next, we perform checks of computational faithfulness and model sensitivity as proposed by Schad, Betancourt and Vasishth (2020) and implemented in the SBC package. We create models for each of the simulated datasets. Then, we calculate performance metrics for each of these models, focusing on the population-level parameters. 
+Then, we create graphs showing the prior predictive distribution to check whether our priors fit our general expectations about the data. Next, we perform checks of computational faithfulness and model sensitivity as proposed by Schad, Betancourt and Vasishth (2020) and implemented in the SBC package. We create models for each of the simulated datasets. Then, we calculate performance metrics for each of these models, focusing on the population-level parameters. 
 
 # S3.2 AOI of first fixation
 

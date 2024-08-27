@@ -186,7 +186,7 @@ We planned to determine the group-level effect subjects following Barr (2013). F
 
 We perform prior predictive checks as proposed in Schad, Betancourt and Vasishth (2020) using the SBC package and creating `r nsim` simulations. In each simulation, parameters are simulated from the priors. Then, these parameters are used to create simulated data with the same structure as the original data. Both the true underlying parameters and the simulated data are saved. 
 
-Then, we create graphs showing the prior predictive distribution of the simulated discrimination threshold to check whether our priors fit our general expectations about the data. Next, we perform checks of computational faithfulness and model sensitivity as proposed by Schad, Betancourt and Vasishth (2020) and implemented in the SBC package. We create models for each of the simulated datasets. Then, we calculate performance metrics for each of these models, focusing on the population-level parameters. 
+Then, we create graphs showing the prior predictive distribution to check whether our priors fit our general expectations about the data. Next, we perform checks of computational faithfulness and model sensitivity as proposed by Schad, Betancourt and Vasishth (2020) and implemented in the SBC package. We create models for each of the simulated datasets. Then, we calculate performance metrics for each of these models, focusing on the population-level parameters. 
 
 # S2.2 Fixation durations
 
