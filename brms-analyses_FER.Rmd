@@ -43,7 +43,7 @@ if(!dir.exists(cache_dir)) {
 }
 
 # load the function to perform the sensitivity analysis
-source('fun_bf-sens.R')
+source('helpers/fun_bf-sens.R')
 
 # graph settings 
 c_light = "#a9afb2"; c_light_highlight = "#8ea5b2"; c_mid = "#6b98b2" 
@@ -586,7 +586,7 @@ f.com = brms::bf(disc | trunc(lb = 0, ub = 1) ~ diagnosis * emo * sfsr.disc +
                    (1 | subID))
 
 # check if the SBC already exists
-if (file.exists(file.path(cache_dir, sprintf("res_%s.rds", code)))) {
+if (file.exists(file.path(cache_dir, sprintf("df_res_%s.rds", code)))) {
   # load in the results of the SBC
   df.results = readRDS(file.path(cache_dir, sprintf("df_res_%s.rds", code)))
   df.backend = readRDS(file.path(cache_dir, sprintf("df_div_%s.rds", code)))
