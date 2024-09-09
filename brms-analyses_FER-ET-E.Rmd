@@ -51,7 +51,7 @@ library(future)
 plan(multisession)
 
 # load the function to perform the sensitivity analysis
-source('fun_bf-sens.R')
+source('helpers/fun_bf-sens.R')
 
 ```
 
@@ -217,7 +217,7 @@ kable(df.first.agg %>%
 
 # Bayesian ANOVA
 aov.time = anovaBF(rpic_start   ~ diagnosis, data = df.first.agg)
-summary(aov.time)
+aov.time@bayesFactor
 
 ```
 

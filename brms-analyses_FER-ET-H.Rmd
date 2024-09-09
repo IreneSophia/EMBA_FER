@@ -52,7 +52,7 @@ library(future)
 plan(multisession)
 
 # load function for BF sensitivity analysis
-source('fun_bf-sens.R')
+source('helpers/fun_bf-sens.R')
 
 ```
 
@@ -194,7 +194,7 @@ In our facial emotion recognition task, participants were asked to stop the vide
 
 ## Setting up and assessment of the model
 
-First, we figure out possible slopes for the group-level effect subject.
+First, we figure out possible slopes for the group-level effect subject. To do so, we follow the suggestions from Barr (2013) as described here: https://psyteachr.github.io/stat-models-v1/linear-mixed-effects-models-with-crossed-random-factors.html 
 
 ```{r fix_grp}
 
@@ -484,9 +484,9 @@ df.fix %>%
 
 ## Bayes factor analysis
 
-To complement our hypothesis testing using brms::hypothesis(), we perform a Bayes Factor analysis with models excluding some of our population-level predictors. 
+To complement our hypothesis testing using brms::hypothesis(), we wanted to perform a Bayes Factor analysis with models excluding some of our population-level predictors. Unfortunately, we get a warning when attempting to use bridgesampling for our chosen priors. Therefore, we perform no Bayes Factor model comparison and this code section is not evaluated. 
 
-```{r bf_fix, error=T}
+```{r bf_fix, eval=F}
 
 # set the directory in which to save results
 sense_dir = file.path(getwd(), "_brms_sens_cache")
@@ -530,7 +530,7 @@ for (pr.desc in pr.descriptions) {
   # use the function
   bf_sens_3int(m.fix.bf, "diagnosis", "emo", "AOI", pr.desc, 
           main.code, # prefix for all models and MLL
-          file.path("~/Insync/10planki@gmail.com/Google Drive/NEVIA//logfiles", "log_FER_fix.txt"), # log file
+          file.path(sense_dir, "log_FER_fix.txt"), # log file
           sense_dir, # where to save the models and MLL
           reps = 5
           )
@@ -538,7 +538,6 @@ for (pr.desc in pr.descriptions) {
 
 ```
 
-Unfortunately, we get a warning when attempting to use bridgesampling for our chosen priors. Therefore, we perform no Bayes Factor model comparison. 
 
 # S2.3 Number of saccades
 
@@ -851,7 +850,7 @@ for (pr.desc in pr.descriptions) {
   # use the function
   bf_sens_2int(m.sac.bf, "diagnosis", "emo", pr.desc, 
           main.code, # prefix for all models and MLL
-          file.path("~/Insync/10planki@gmail.com/Google Drive/NEVIA/logfiles", "log_FER_sac.txt"), # log file
+          file.path(sense_dir, "log_FER_sac.txt"), # log file
           sense_dir # where to save the models and MLL
           )
 }
