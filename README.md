@@ -12,13 +12,25 @@ This repository is a work in progress. The script are continuously augmented.
 
 ## How to run this analysis
 
-This repository includes scripts for the evaluation of the stimuli, presentation of the paradigm, preprocessing of the data and analysis. Due to privacy issues, we only share preprocessed and anonymised data. This data can be used to run the main analysis scripts: 
+This repository includes scripts for the evaluation of the stimuli, presentation of the paradigm, preprocessing of the data and analysis. Due to privacy issues, we only share preprocessed and anonymised data. Therefore, only the following analysis RMarkdown scripts can actually be run based on this repository: 
 
 * `brms-analyses_FER.Rmd` : behavioural analysis, exploratory and hypothesis testing
 * `brms-analyses_FER-ET-H.Rmd` : eye tracking analysis, hypothesis testing
 * `brms-analyses_FER-ET-E.Rmd` : eye tracking analysis, exploratory
 
+These scripts also use scripts from the `helpers` folder. There are some absolute paths in these scripts within if statements. Downloading everything in this repository should ensure that these are not executed. 
+
 We also share the models and the results of the simulation-based calibration. **Rerunning these, especially the SBC, can take days depending on the specific model.** Runtime of the scripts using the models and SBC shared in this repository should only take up to an hour. The scripts will create all relevant output that was used in the manuscript. If you need access to other data associated with this project or want to use the stimuli / paradigm, please contact the project lead (Irene Sophia Plank, 10planki@gmail.com). 
+
+The `experiment` folder contains the scripts needed to present the experiment as well as the RMarkdown containing all information regarding the stimulus evaluation and selection. 
+
+The `prepro` folder contains scripts used during preprocessing. All scripts contain information in the header regarding their use. 
+
+### Versions and installation
+
+Each html file contains an output of the versions used to run that particular script. It is important to install all packages mentioned in the html file before running a specific analysis file. Not all packages can be installed with `install.packages`, please consult the respective installation pages of the packages for more information. If the models are rerun, ensure a valid cmdstanr installation. 
+
+For preprocessing of the eye tracking data, MATLAB R2023a was used. 
 
 ## Variables
 
@@ -99,7 +111,7 @@ as well as `df.exc` (group and number of excluded participants), `df.sht` (outco
 * opt : option chosen by the participant (AF = afraid, AN = angry, HA = happy, SA = sadness)
 * disc : discrimination threshold, NA if answered incorrectly, otherwise percentage of video watched
 * acc : whether the emotion was chosen correctly, i.e., opt == emo, either TRUE or FALSE
-* n.first : how many valid first fixations did this participant have in total
+* n.first : how many first fixations within 60 frames did this participant have in total
 * diagnosis: diagnostic status of this participant, either ADHD, ASD or COMP (comparison group, no psychiatric diagnoses)
 * AOI.code : AOI but coded as numbers
 
