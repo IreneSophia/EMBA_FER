@@ -1,3 +1,5 @@
+# This script reads in the fixations of each participant and evaluates them to assess whether they are relevant for the analysis. It depends on the data created by the MATLAB preprocessing of the eye tracking data as well as the preprocessed behavioural data. (c) Irene Sophia Plank. 
+
 # setup
 library(tidyverse)
 fl.path = '/home/emba/Documents/EMBA'

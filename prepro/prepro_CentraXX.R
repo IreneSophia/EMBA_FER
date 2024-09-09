@@ -1,3 +1,5 @@
+# This script preprocesses the questionnaire data as downloaded from CentraXX and converts it into a data frame with the aggregated questionnaire values and demographic information. It uses the downloaded CentraXX csv file as well the CFT-norms and MWT-norms csvs. (c) Irene Sophia Plank. 
+
 # Load packages 
 library(tidyverse)
 
