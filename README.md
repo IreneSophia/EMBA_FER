@@ -20,7 +20,7 @@ This repository includes scripts for the evaluation of the stimuli, presentation
 
 These scripts also use scripts from the `helpers` folder. There are some absolute paths in these scripts within if statements. Downloading everything in this repository should ensure that these are not executed. 
 
-We also share the models and the results of the simulation-based calibration. **Rerunning these, especially the SBC, can take days depending on the specific model.** Runtime of the scripts using the models and SBC shared in this repository should only take up to an hour. The scripts will create all relevant output that was used in the manuscript. If you need access to other data associated with this project or want to use the stimuli / paradigm, please contact the project lead (Irene Sophia Plank, 10planki@gmail.com). 
+We also share the models and the results of the simulation-based calibration. **Rerunning these, especially the SBC, can take days depending on the specific model.** Runtime of the scripts using the models and SBC shared in this repository should only take a couple of minutes. The scripts will create all relevant output that was used in the manuscript. If you need access to other data associated with this project or want to use the stimuli / paradigm, please contact the project lead (Irene Sophia Plank, 10planki@gmail.com). 
 
 The `experiment` folder contains the scripts needed to present the experiment as well as the RMarkdown containing all information regarding the stimulus evaluation and selection. 
 
@@ -34,7 +34,7 @@ For preprocessing of the eye tracking data, MATLAB R2023a was used.
 
 ## Variables
 
-Data is shared as RDS files which can be read into R. In the following, you can find a description of the columns contained in the data frame saved in these files. 
+Data is shared in RDS and RData files which can be read into R. In the following, you can find a description of the columns contained in the data frame saved in these files. 
 
 ### `FER_data.RData`
 
@@ -128,7 +128,7 @@ as well as `df.exc` (group and number of excluded participants), `df.sht` (outco
 
 * Project lead: Irene Sophia Plank
 * NEVIA lab PI: Christine M. Falter-Wagner
-* Project members (alphabetically): Krasniqi, Kaltrina; Nowark, Julia; Pior, Alexandra; Yurova, Anna
+* Project members (alphabetically): Krasniqi, Kaltrina; Nowak, Julia; Pior, Alexandra; Yurova, Anna
 
 ## Licensing
 
