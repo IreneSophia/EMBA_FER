@@ -2,7 +2,7 @@
 title: "S1: behavioural analysis with brms"
 author: "I. S. Plank"
 date: "`r Sys.Date()`"
-output: html_document
+output: pdf_document
 ---
   
 ```{r settings, include=FALSE}
@@ -120,7 +120,8 @@ Since this is sensitive data, we load the anonymised version of the processed da
 if (!file.exists("FER_data.RData")) {
 
   # get demo info for subjects
-  df.sub = read_csv(file.path("/home/emba/Documents/EMBA/CentraXX", "EMBA_centraXX.csv"), show_col_types = F) %>%
+  df.sub = read_csv(file.path("/home/emba/Documents/EMBA/CentraXX", "EMBA_centraXX.csv"), 
+                    show_col_types = F) %>%
     mutate(
       diagnosis = recode(diagnosis, "CTR" = "COMP")
     )
@@ -130,7 +131,11 @@ if (!file.exists("FER_data.RData")) {
   
   # load excluded participants (low accuracy)
   exc = scan(file.path(dt.path, 'FER-exc.txt'), what="character", sep=NULL)
-  df.exc = df.sub %>% filter(subID %in% exc) %>% select(diagnosis) %>% group_by(diagnosis) %>% count()
+  df.exc = df.sub %>% 
+    filter(subID %in% exc) %>% 
+    select(diagnosis) %>% 
+    group_by(diagnosis) %>% 
+    count()
   
   # load the data and merge with group
   df.fer = merge(df.sub %>% select(subID, diagnosis), 
@@ -162,9 +167,13 @@ if (!file.exists("FER_data.RData")) {
   
   # print gender frequencies and compare them across groups
   tb.gen = xtabs(~ gender + diagnosis, data = df.sub)
-  ct.full = contingencyTableBF(tb.gen, sampleType = "indepMulti", fixedMargin = "cols")
+  ct.full = contingencyTableBF(tb.gen, 
+                               sampleType = "indepMulti", 
+                               fixedMargin = "cols")
   # since only DAN in the ADHD group, we try again after excluding them
-  ct.mf = contingencyTableBF(tb.gen[2:3,], sampleType = "indepMulti", fixedMargin = "cols")
+  ct.mf = contingencyTableBF(tb.gen[2:3,], 
+                             sampleType = "indepMulti", 
+                             fixedMargin = "cols")
   
   # check which outcomes of interest are normally distributed
   df.sht = df.sub %>% 
@@ -174,7 +183,8 @@ if (!file.exists("FER_data.RData")) {
       sig = if_else(p < 0.05, "*", "")
     )
   
-  # most of the measures are not normally distributed, therefore, we compute ranks for these outcomes
+  # most of the measures are not normally distributed;
+  # therefore, we compute ranks for these outcomes
   df.sub = df.sub %>% 
     mutate(
       rage   = rank(age),
@@ -194,52 +204,115 @@ if (!file.exists("FER_data.RData")) {
   
   # ...and put everything in a new dataframe for printing
   measurement  = "Age"
-  ADHD     = sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ADHD",]$age), sd(df.sub[df.sub$diagnosis == "ADHD",]$age)/sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",])))
-  ASD      = sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ASD",]$age), sd(df.sub[df.sub$diagnosis == "ASD",]$age)/sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",])))
-  COMP      = sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "COMP",]$age), sd(df.sub[df.sub$diagnosis == "COMP",]$age)/sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",])))
+  ADHD     = sprintf("%.2f (±%.2f)", 
+                     mean(df.sub[df.sub$diagnosis == "ADHD",]$age), 
+                     sd(df.sub[df.sub$diagnosis == "ADHD",]$age)/
+                       sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",])))
+  ASD      = sprintf("%.2f (±%.2f)", 
+                     mean(df.sub[df.sub$diagnosis == "ASD",]$age), 
+                     sd(df.sub[df.sub$diagnosis == "ASD",]$age)/
+                       sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",])))
+  COMP      = sprintf("%.2f (±%.2f)", 
+                      mean(df.sub[df.sub$diagnosis == "COMP",]$age), 
+                      sd(df.sub[df.sub$diagnosis == "COMP",]$age)/
+                        sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",])))
   logBF10 = sprintf("%.3f", aov.age@bayesFactor[["bf"]])
   df.table = data.frame(measurement, ADHD, ASD, COMP, logBF10)
   df.table = rbind(df.table,
        c(
          "ASRS",
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ADHD",]$ASRS_total), sd(df.sub[df.sub$diagnosis == "ADHD",]$ASRS_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ASD",]$ASRS_total), sd(df.sub[df.sub$diagnosis == "ASD",]$ASRS_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "COMP",]$ASRS_total), sd(df.sub[df.sub$diagnosis == "COMP",]$ASRS_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ADHD",]$ASRS_total), 
+                 sd(df.sub[df.sub$diagnosis == "ADHD",]$ASRS_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ASD",]$ASRS_total), 
+                 sd(df.sub[df.sub$diagnosis == "ASD",]$ASRS_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "COMP",]$ASRS_total), 
+                 sd(df.sub[df.sub$diagnosis == "COMP",]$ASRS_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
          sprintf("%.3f", aov.ASRS@bayesFactor[["bf"]])
        ),
        c(
          "BDI",
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ADHD",]$BDI_total), sd(df.sub[df.sub$diagnosis == "ADHD",]$BDI_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ASD",]$BDI_total), sd(df.sub[df.sub$diagnosis == "ASD",]$BDI_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "COMP",]$BDI_total), sd(df.sub[df.sub$diagnosis == "COMP",]$BDI_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ADHD",]$BDI_total), 
+                 sd(df.sub[df.sub$diagnosis == "ADHD",]$BDI_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ASD",]$BDI_total), 
+                 sd(df.sub[df.sub$diagnosis == "ASD",]$BDI_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "COMP",]$BDI_total), 
+                 sd(df.sub[df.sub$diagnosis == "COMP",]$BDI_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
          sprintf("%.3f", aov.BDI@bayesFactor[["bf"]])
        ),
        c(
          "Gender (diverse/agender/non-binary - female - male)",
-         sprintf("%d - %d - %d", nrow(df.sub[df.sub$diagnosis == "ADHD" & df.sub$gender == "dan",]), nrow(df.sub[df.sub$diagnosis == "ADHD" & df.sub$gender == "fem",]), nrow(df.sub[df.sub$diagnosis == "ADHD" & df.sub$gender == "mal",])),
-         sprintf("%d - %d - %d", nrow(df.sub[df.sub$diagnosis == "ASD" & df.sub$gender == "dan",]), nrow(df.sub[df.sub$diagnosis == "ASD" & df.sub$gender == "fem",]), nrow(df.sub[df.sub$diagnosis == "ASD" & df.sub$gender == "mal",])),
-         sprintf("%d - %d - %d", nrow(df.sub[df.sub$diagnosis == "COMP" & df.sub$gender == "dan",]), nrow(df.sub[df.sub$diagnosis == "COMP" & df.sub$gender == "fem",]), nrow(df.sub[df.sub$diagnosis == "COMP" & df.sub$gender == "mal",])),
+         sprintf("%d - %d - %d", 
+                 nrow(df.sub[df.sub$diagnosis == "ADHD" & df.sub$gender == "dan",]), 
+                 nrow(df.sub[df.sub$diagnosis == "ADHD" & df.sub$gender == "fem",]), 
+                 nrow(df.sub[df.sub$diagnosis == "ADHD" & df.sub$gender == "mal",])),
+         sprintf("%d - %d - %d", 
+                 nrow(df.sub[df.sub$diagnosis == "ASD" & df.sub$gender == "dan",]), 
+                 nrow(df.sub[df.sub$diagnosis == "ASD" & df.sub$gender == "fem",]), 
+                 nrow(df.sub[df.sub$diagnosis == "ASD" & df.sub$gender == "mal",])),
+         sprintf("%d - %d - %d", 
+                 nrow(df.sub[df.sub$diagnosis == "COMP" & df.sub$gender == "dan",]), 
+                 nrow(df.sub[df.sub$diagnosis == "COMP" & df.sub$gender == "fem",]), 
+                 nrow(df.sub[df.sub$diagnosis == "COMP" & df.sub$gender == "mal",])),
          sprintf("%.3f", ct.full@bayesFactor[["bf"]])
        ),
        c(
          "IQ",
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ADHD",]$iq), sd(df.sub[df.sub$diagnosis == "ADHD",]$iq)/sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ASD",]$iq), sd(df.sub[df.sub$diagnosis == "ASD",]$iq)/sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "COMP",]$iq), sd(df.sub[df.sub$diagnosis == "COMP",]$iq)/sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ADHD",]$iq), 
+                 sd(df.sub[df.sub$diagnosis == "ADHD",]$iq)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ASD",]$iq), 
+                 sd(df.sub[df.sub$diagnosis == "ASD",]$iq)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "COMP",]$iq), 
+                 sd(df.sub[df.sub$diagnosis == "COMP",]$iq)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
          sprintf("%.3f", aov.iq@bayesFactor[["bf"]])
        ),
        c(
          "RAADS",
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ADHD",]$RAADS_total), sd(df.sub[df.sub$diagnosis == "ADHD",]$RAADS_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ASD",]$RAADS_total), sd(df.sub[df.sub$diagnosis == "ASD",]$RAADS_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "COMP",]$RAADS_total), sd(df.sub[df.sub$diagnosis == "COMP",]$RAADS_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ADHD",]$RAADS_total), 
+                 sd(df.sub[df.sub$diagnosis == "ADHD",]$RAADS_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ASD",]$RAADS_total), 
+                 sd(df.sub[df.sub$diagnosis == "ASD",]$RAADS_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "COMP",]$RAADS_total), 
+                 sd(df.sub[df.sub$diagnosis == "COMP",]$RAADS_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
          sprintf("%.3f", aov.RAADS@bayesFactor[["bf"]])
        ),
        c(
          "TAS",
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ADHD",]$TAS_total), sd(df.sub[df.sub$diagnosis == "ADHD",]$TAS_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "ASD",]$TAS_total), sd(df.sub[df.sub$diagnosis == "ASD",]$TAS_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
-         sprintf("%.2f (±%.2f)", mean(df.sub[df.sub$diagnosis == "COMP",]$TAS_total), sd(df.sub[df.sub$diagnosis == "COMP",]$TAS_total)/sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ADHD",]$TAS_total), 
+                 sd(df.sub[df.sub$diagnosis == "ADHD",]$TAS_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ADHD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "ASD",]$TAS_total), 
+                 sd(df.sub[df.sub$diagnosis == "ASD",]$TAS_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "ASD",]))),
+         sprintf("%.2f (±%.2f)", 
+                 mean(df.sub[df.sub$diagnosis == "COMP",]$TAS_total), 
+                 sd(df.sub[df.sub$diagnosis == "COMP",]$TAS_total)/
+                   sqrt(nrow(df.sub[df.sub$diagnosis == "COMP",]))),
          sprintf("%.3f", aov.TAS@bayesFactor[["bf"]])
        )
   )
@@ -433,13 +506,20 @@ p2 = plot_rank_hist(df.results.b, bins = 20) + theme_bw() +
 p3 = plot_sim_estimated(df.results.b, alpha = a) + theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3)) +
   scale_y_continuous(breaks=scales::pretty_breaks(n = 3))
-p4 = plot_contraction(df.results.b, prior_sd = setNames(c(0.15, rep(0.10, length(unique(df.results.b$variable))-1)), unique(df.results.b$variable))) +
+p4 = plot_contraction(
+  df.results.b, 
+  prior_sd = setNames(c(0.15, 
+                        rep(0.10, 
+                            length(unique(df.results.b$variable))-1)), 
+                      unique(df.results.b$variable))) +
   theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3)) +
   scale_y_continuous(breaks=scales::pretty_breaks(n = 3))
 
 p = ggarrange(p1, p2, p3, p4, labels = "AUTO", ncol = 1, nrow = 4)
-annotate_figure(p, top = text_grob("Computational faithfulness and model sensitivity", face = "bold", size = 14))
+annotate_figure(p, 
+                top = text_grob("Computational faithfulness and model sensitivity", 
+                face = "bold", size = 14))
 
 ```
 
@@ -494,7 +574,9 @@ p2 = ppc_stat_grouped(df.fer.agg$disc, post.pred, df.fer.agg$diagnosis) +
 
 p = ggarrange(p1, p2, 
           nrow = 2, ncol = 1, labels = "AUTO")
-annotate_figure(p, top = text_grob("Posterior predictive checks: discrimination", face = "bold", size = 14))
+annotate_figure(p, 
+                top = text_grob("Posterior predictive checks: discrimination", 
+                face = "bold", size = 14))
 
 ```
 
@@ -504,7 +586,7 @@ The simulated data based on the model fits well with the real data.
 
 Now that we are convinced that we can trust our model, we have a look at its estimate and use the hypothesis function to assess our hypotheses and perform explorative tests. 
 
-```{r final, fig.height=9}
+```{r final, fig.height=12}
 
 # print a summary
 summary(m.fer)
@@ -558,7 +640,9 @@ h1b
 # explore differences between ASD and ADHD
 e1 = hypothesis(m.fer, "diagnosis2 > diagnosis1", alpha = 0.025)
 e1
-e1_equ = equivalence_test(df.m.fer %>% mutate(`b_ADHD-ASD` = b_diagnosis1 - b_diagnosis2) %>% select(`b_ADHD-ASD`))
+e1_equ = equivalence_test(df.m.fer %>% 
+                            mutate(`b_ADHD-ASD` = b_diagnosis1 - b_diagnosis2) %>% 
+                            select(`b_ADHD-ASD`))
 e1_equ
 
 ```
@@ -638,13 +722,20 @@ p2 = plot_rank_hist(df.results.b, bins = 20) +
 p3 = plot_sim_estimated(df.results.b, alpha = a) + theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3)) +
   scale_y_continuous(breaks=scales::pretty_breaks(n = 3))
-p4 = plot_contraction(df.results.b, prior_sd = setNames(c(0.15, rep(0.10, length(unique(df.results.b$variable))-1)), unique(df.results.b$variable))) +
+p4 = plot_contraction(
+  df.results.b, 
+  prior_sd = setNames(c(0.15, 
+                        rep(0.10, 
+                            length(unique(df.results.b$variable))-1)), 
+                      unique(df.results.b$variable))) +
   theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3)) +
   scale_y_continuous(breaks=scales::pretty_breaks(n = 3))
 
 p = ggarrange(p1, p2, p3, p4, labels = "AUTO", ncol = 1, nrow = 4)
-annotate_figure(p, top = text_grob("Results of SBC including FSR discrimination threshold", face = "bold", size = 14))
+annotate_figure(p, 
+                top = text_grob("Results of SBC including FSR discrimination threshold", 
+                face = "bold", size = 14))
 
 
 ```
@@ -680,10 +771,16 @@ p2 = ppc_stat_grouped(df.fer.agg$disc, post.pred, df.fer.agg$diagnosis) +
 
 p = ggarrange(p1, p2, 
           nrow = 2, ncol = 1, labels = "AUTO")
-annotate_figure(p, top = text_grob("Posterior predictive checks: emotion discrimination with FSR covariate", face = "bold", size = 14))
+annotate_figure(p, 
+                top = text_grob("Posterior predictive checks: EDT with SDT covariate", 
+                face = "bold", size = 14))
 
-# print a summary
-sjPlot::tab_model(m.fer, m.com, dv.labels = c("Excluding SDT", "Including SDT"))
+# print a summary 
+summary(m.com)
+
+```
+
+```{r cov_fsr4, fig.height=12}
 
 ## test the hypotheses again
 
@@ -739,7 +836,9 @@ hypothesis(m.com, "0 < sfsr.disc", alpha = 0.025)
 
 # explore differences between ASD and ADHD
 hypothesis(m.com, "diagnosis2 > diagnosis1", alpha = 0.025)
-e1.fsr_equ = equivalence_test(df.m.com %>% mutate(`b_ADHD-ASD` = b_diagnosis1 - b_diagnosis2) %>% select(`b_ADHD-ASD`))
+e1.fsr_equ = equivalence_test(df.m.com %>% 
+                                mutate(`b_ADHD-ASD` = b_diagnosis1 - b_diagnosis2) %>% 
+                                select(`b_ADHD-ASD`))
 e1.fsr_equ
 
 ```
@@ -752,8 +851,11 @@ Although the estimates for the autistic sample decreased when including species 
 
 # rain cloud plot for both tasks
 a = 0.66
-rbind(df.fer.agg %>% rename("condition" = "emo") %>% select(subID, diagnosis, condition, disc),
-      df.fer.agg %>% select(subID, diagnosis, fsr.disc) %>% 
+rbind(df.fer.agg %>% 
+        rename("condition" = "emo") %>% 
+        select(subID, diagnosis, condition, disc),
+      df.fer.agg %>% 
+        select(subID, diagnosis, fsr.disc) %>% 
         group_by(subID, diagnosis) %>% 
         summarise(condition = "species", disc = mean(fsr.disc))) %>%
   mutate(
@@ -777,9 +879,14 @@ point.args.pos = list(position = ggpp::position_dodgenudge(x = -0.25, width = 0.
   scale_fill_manual(values = custom.col) +
   scale_color_manual(values = custom.col) +
   ylim(0, 1) +
-  labs(title = "Discrimination threshold per subject", x = "", y = "Discrimination threshold (%)") +
+  labs(title = "Discrimination threshold per subject", 
+       x = "", 
+       y = "Discrimination threshold (%)") +
   theme_bw() + 
-  theme(legend.position = c(0.25,0.1), plot.title = element_text(hjust = 0.5), legend.direction = "horizontal", text = element_text(size = 15))
+  theme(legend.position = c(0.25,0.1), 
+        plot.title = element_text(hjust = 0.5), 
+        legend.direction = "horizontal", 
+        text = element_text(size = 15))
 
 
 ```
@@ -802,7 +909,8 @@ pr.descriptions = c("chosen",
 
 # check which have been run already
 if (file.exists(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)))) {
-  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F) %>%
+  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
+                     show_col_types = F) %>%
     select(priors) %>% distinct()
   pr.descriptions = pr.descriptions[!(pr.descriptions %in% pr.done$priors)]
 }
@@ -835,7 +943,8 @@ for (pr.desc in pr.descriptions) {
 }
 
 # read in the results
-df.fer.bf = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F)
+df.fer.bf = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
+                     show_col_types = F)
 
 # check the sensitivity analysis result per model
 df.fer.bf %>%
@@ -852,7 +961,10 @@ df.fer.bf %>%
       T ~ 999),
     sd = fct_reorder(sd, order)
   ) %>%
-  ggplot(aes(y = bf.log, x = sd, group = `population-level`, colour = `population-level`)) +
+  ggplot(aes(y = bf.log, 
+             x = sd, 
+             group = `population-level`, 
+             colour = `population-level`)) +
   geom_point() +
   geom_line() +
   geom_vline(xintercept = "1") +
@@ -861,7 +973,8 @@ df.fer.bf %>%
   #facet_wrap(. ~ `population-level`, scales = "free_y") +
   scale_colour_manual(values = custom.col) +
   theme_bw() +
-  theme(legend.position = "bottom", axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 ```
 
@@ -888,14 +1001,18 @@ df.fer.bf %>%
       T ~ 999),
     sd = fct_reorder(sd, order)
   ) %>%
-  ggplot(aes(y = bf.log, x = sd, group = `population-level`, colour = `population-level`)) + 
+  ggplot(aes(y = bf.log, 
+             x = sd, 
+             group = `population-level`, 
+             colour = `population-level`)) + 
   geom_point() +
   geom_line() + 
   geom_vline(xintercept = "1") +
   theme_bw() +
   ggtitle("Sensitivity analysis with the 'diagnosis + emotion' model as reference") +
   scale_colour_manual(values = c(custom.col[2], custom.col[3], custom.col[4])) +
-  theme(legend.position = c(0.2, 0.25), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+  theme(legend.position = c(0.2, 0.25), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 ```
 
@@ -1071,13 +1188,20 @@ p3 = plot_sim_estimated(df.results.b, alpha = a) + theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3)) +
   scale_y_continuous(breaks=scales::pretty_breaks(n = 3))
 
-prior_sd = setNames(c(1, 1, 1, 0.5, 0.5, 0.5, 1, 1, 1, 1, 1, 1), unique(df.results.b$variable))
+prior_sd = setNames(c(1, 1, 1, # intercept and diagnosis
+                      0.5, 0.5, 0.5, # emotions
+                      1, 1, 1, 1, 1, 1), # interactions 
+                    unique(df.results.b$variable))
 
 p4 = plot_contraction(df.results.b, prior_sd = prior_sd) + theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3))
 
-p = ggarrange(p0, p1, p2, p3, p4, labels = "AUTO", ncol = 1, nrow = 5, heights = c(1, 2, 2, 2, 2))
-annotate_figure(p, top = text_grob("Prior predictive checks and SBC", face = "bold", size = 14))
+p = ggarrange(p0, p1, p2, p3, p4, 
+              labels = "AUTO", ncol = 1, nrow = 5, 
+              heights = c(1, 2, 2, 2, 2))
+annotate_figure(p, 
+                top = text_grob("Prior predictive checks and SBC", 
+                face = "bold", size = 14))
 
 ```
 
@@ -1129,7 +1253,9 @@ p2 = ppc_stat_grouped(df.fer$acc.code, post.pred, df.fer$diagnosis) +
 
 p = ggarrange(p1, p2,
   nrow = 2, ncol = 1, labels = "AUTO")
-annotate_figure(p, top = text_grob("Posterior predictive checks: errors", face = "bold", size = 14))
+annotate_figure(p, 
+                top = text_grob("Posterior predictive checks: errors", 
+                face = "bold", size = 14))
 
 ```
 
@@ -1139,7 +1265,7 @@ Our model fits the data very well.
 
 Now that we are convinced that we can trust our model, we have a look at its estimate and use the hypothesis function to perform explorative tests.
 
-```{r err_final, fig.height=9}
+```{r err_final, fig.height=12}
 
 # print a summary
 summary(m.err)
@@ -1189,9 +1315,17 @@ e.acc3 = hypothesis(m.err, "diagnosis2 > diagnosis1", alpha = 0.025)
 e.acc3
 
 # print grand average of error rates
-kable(df.fer %>% group_by(subID, diagnosis, emo) %>% summarise(acc = mean(acc, na.rm = T)) %>% group_by(diagnosis, emo) %>% summarise(mean_accuracy = mean(acc, na.rm = T), sdt = sd(acc, na.rm = T)))
+kable(df.fer %>% 
+        group_by(subID, diagnosis, emo) %>% 
+        summarise(acc = mean(acc, na.rm = T)) %>% 
+        group_by(diagnosis, emo) %>% 
+        summarise(mean_accuracy = mean(acc, na.rm = T), sdt = sd(acc, na.rm = T)))
 
-df.acc = df.fer %>% group_by(subID, diagnosis, emo) %>% summarise(acc = mean(acc, na.rm = T)) %>% ungroup() %>% summarise(mean_accuracy = mean(acc, na.rm = T))
+df.acc = df.fer %>% 
+  group_by(subID, diagnosis, emo) %>% 
+  summarise(acc = mean(acc, na.rm = T)) %>% 
+  ungroup() %>% 
+  summarise(mean_accuracy = mean(acc, na.rm = T))
 
 ```
 
@@ -1199,8 +1333,11 @@ df.acc = df.fer %>% group_by(subID, diagnosis, emo) %>% summarise(acc = mean(acc
 
 # rain cloud plot for both tasks
 a = 0.66
-rbind(df.fer.agg %>% rename("condition" = "emo") %>% select(subID, diagnosis, condition, acc),
-      df.fer.agg %>% select(subID, diagnosis, fsr.acc) %>% 
+rbind(df.fer.agg %>% 
+        rename("condition" = "emo") %>% 
+        select(subID, diagnosis, condition, acc),
+      df.fer.agg %>% 
+        select(subID, diagnosis, fsr.acc) %>% 
         group_by(subID, diagnosis) %>% 
         summarise(condition = "species", acc = mean(fsr.acc))) %>%
   mutate(
@@ -1226,7 +1363,10 @@ point.args.pos = list(position = ggpp::position_dodgenudge(x = -0.25, width = 0.
   ylim(0, 1) +
   labs(title = "Accuracies per subject", x = "", y = "Accuracy (%)") +
   theme_bw() + 
-  theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5), legend.direction = "horizontal", text = element_text(size = 15))
+  theme(legend.position = "bottom", 
+        plot.title = element_text(hjust = 0.5), 
+        legend.direction = "horizontal", 
+        text = element_text(size = 15))
 
 ```
 
@@ -1249,7 +1389,8 @@ pr.descriptions = c("chosen",
 
 # check which have been run already
 if (file.exists(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)))) {
-  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F) %>%
+  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
+                     show_col_types = F) %>%
     select(priors) %>% distinct()
   pr.descriptions = pr.descriptions[!(pr.descriptions %in% pr.done$priors)]
 }
@@ -1283,7 +1424,8 @@ for (pr.desc in pr.descriptions) {
 }
 
 # read in the results
-df.err.bf = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F)
+df.err.bf = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
+                     show_col_types = F)
 
 # check the sensitivity analysis result per model
 df.err.bf %>%
@@ -1300,7 +1442,10 @@ df.err.bf %>%
       T ~ 999),
     sd = fct_reorder(sd, order)
   ) %>%
-  ggplot(aes(y = bf.log, x = sd, group = `population-level`, colour = `population-level`)) + 
+  ggplot(aes(y = bf.log, 
+             x = sd, 
+             group = `population-level`, 
+             colour = `population-level`)) + 
   geom_point() +
   geom_line() + 
   ggtitle("Sensitivity analysis with the intercept-only model as reference") +
@@ -1309,7 +1454,8 @@ df.err.bf %>%
   #facet_wrap(. ~ `population-level`, scales = "free_y") +
   scale_colour_manual(values = custom.col) +
   theme_bw() +
-  theme(legend.position = "bottom", axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 ```
 
@@ -1336,7 +1482,10 @@ df.err.bf %>%
       T ~ 999),
     sd = fct_reorder(sd, order)
   ) %>%
-  ggplot(aes(y = bf.log, x = sd, group = `population-level`, colour = `population-level`)) + 
+  ggplot(aes(y = bf.log, 
+             x = sd, 
+             group = `population-level`, 
+             colour = `population-level`)) + 
   geom_point() +
   geom_line() + 
   geom_vline(xintercept = "1") +

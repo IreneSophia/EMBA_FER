@@ -2,7 +2,7 @@
 title: "S2: ET analysis with brms - preregistered hypotheses"
 author: "I. S. Plank"
 date: "`r Sys.Date()`"
-output: html_document
+output: pdf_document
 ---
 
 ```{r settings, include=FALSE}
@@ -115,7 +115,8 @@ if (file.exists("FER_fix.rds") & file.exists("FER_sac.rds")) {
   load(file.path(dt.path, "FER_ET_data.RData"))
   
   # get demographic information
-  df.sub = read_csv(file.path("/home/emba/Documents/EMBA/CentraXX", "EMBA_centraXX.csv"), show_col_types = F) %>%
+  df.sub = read_csv(file.path("/home/emba/Documents/EMBA/CentraXX", "EMBA_centraXX.csv"), 
+                    show_col_types = F) %>%
     mutate(
       diagnosis = recode(diagnosis, "CTR" = "COMP")
     )
@@ -234,7 +235,8 @@ if (file.exists(file.path(cache_dir, paste0("df_res_", code, ".rds")))) {
   dat        = readRDS(file.path(cache_dir, paste0("dat_", code, ".rds")))
 } else {
   # create the data and the results
-  gen  = SBC_generator_brms(f.fix, data = df.fix, prior = priors, family = hurdle_lognormal,
+  gen  = SBC_generator_brms(f.fix, data = df.fix, prior = priors, 
+                            family = hurdle_lognormal,
                           thin = 50, warmup = 20000, refresh = 2000)
   dat = generate_datasets(gen, nsim) 
   saveRDS(dat, file = file.path(cache_dir, paste0("dat_", code, ".rds")))
@@ -244,8 +246,10 @@ if (file.exists(file.path(cache_dir, paste0("df_res_", code, ".rds")))) {
                     bck,
                     cache_mode     = "results", 
                     cache_location = file.path(cache_dir, paste0("res_", code)))
-  saveRDS(res$stats, file = file.path(cache_dir, paste0("df_res_", code, ".rds")))
-  saveRDS(res$backend_diagnostics, file = file.path(cache_dir, paste0("df_div_", code, ".rds")))
+  saveRDS(res$stats, 
+          file = file.path(cache_dir, paste0("df_res_", code, ".rds")))
+  saveRDS(res$backend_diagnostics, 
+          file = file.path(cache_dir, paste0("df_div_", code, ".rds")))
 }
 
 ```
@@ -254,7 +258,7 @@ We start by investigating the Rhats and the number of divergent samples. This sh
 
 Next, we create graphs showing the prior predictive distribution of the simulated data and perform checks of computational faithfulness and model sensitivity. 
 
-```{r priorpc_SBC_fix2, fig.height=38}
+```{r priorpc_SBC_fix2, fig.height=12}
 
 # create a matrix out of generated data
 dvname = gsub(" ", "", gsub("[\\|~].*", "", f.fix)[1])
@@ -311,13 +315,26 @@ p3 = plot_rank_hist(df.results.b, bins = 20) + theme_bw() +
 p4 = plot_sim_estimated(df.results.b, alpha = a) + theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3)) +
   scale_y_continuous(breaks=scales::pretty_breaks(n = 3))
-p5 = plot_contraction(df.results.b, prior_sd = setNames(c(0.20, rep(0.20, length(unique(df.results.b$variable))-1)), unique(df.results.b$variable))) +
+p5 = plot_contraction(
+  df.results.b, 
+  prior_sd = setNames(c(0.20, 
+                        rep(0.20, 
+                            length(unique(df.results.b$variable))-1)), 
+                      unique(df.results.b$variable))) +
   theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3))
 
-p = ggarrange(p1, p2, p3, p4, p5, 
-          nrow = 5, labels = "AUTO", heights = c(1, 2, 2, 2, 2))
-annotate_figure(p, top = text_grob("Prior predictive checks and SBC: fixation durations", face = "bold", size = 14))
+p = ggarrange(p1, p2, p3, 
+          nrow = 3, labels = "AUTO", heights = c(1, 2, 2))
+annotate_figure(p, 
+                top = text_grob("Prior predictive checks and SBC: fixation durations 1", 
+                face = "bold", size = 14))
+
+p = ggarrange(p4, p5, 
+          nrow = 2, labels = "AUTO")
+annotate_figure(p, 
+                top = text_grob("Prior predictive checks and SBC: fixation durations 2", 
+                face = "bold", size = 14))
 
 ```
 
@@ -375,7 +392,9 @@ p2 = ppc_stat_grouped(df.fix$fix.perc, post.pred, df.fix$diagnosis) +
 
 p = ggarrange(p1, p2, 
           nrow = 2, ncol = 1, labels = "AUTO")
-annotate_figure(p, top = text_grob("Posterior predictive checks: percentage fixation durations", face = "bold", size = 14))
+annotate_figure(p, 
+                top = text_grob("Posterior predictive checks: percentage fixation durations", 
+                face = "bold", size = 14))
 
 ```
 
@@ -442,7 +461,9 @@ h2.equ = equivalence_test(post.draws %>%
 h2.equ
 
 # exploration: ASD fixate less on eyes compared to COMP
-e1 = hypothesis(m.fix, "-1*diagnosis1 - 2*diagnosis2 - 1*diagnosis1:AOI1 - 2*diagnosis2:AOI1 > 0", alpha = 0.025)
+e1 = hypothesis(m.fix, 
+              "-1*diagnosis1 - 2*diagnosis2 - 1*diagnosis1:AOI1 - 2*diagnosis2:AOI1 > 0", 
+              alpha = 0.025)
 e1 
 
 ```
@@ -459,32 +480,50 @@ a = 0.66
 # line plot
 df.fix %>%
   mutate(
-    emotion = fct_recode(emo, "fear" = "AF", "anger" = "AN", "happiness" = "HA", "sadness" = "SA"),
+    emotion = fct_recode(emo, 
+                         "fear" = "AF", 
+                         "anger" = "AN", 
+                         "happiness" = "HA", 
+                         "sadness" = "SA"),
     AOI = fct_recode(AOI, "forehead" = "fore")) %>%
   ggplot(aes(x = AOI, y = fix.perc, fill = diagnosis, colour = diagnosis)) + #
   geom_rain(rain.side = 'r',
-            boxplot.args = list(color = "black", outlier.shape = NA, show.legend = FALSE, alpha = a),
-            violin.args = list(color = "black", outlier.shape = NA, alpha = a),
+            boxplot.args = list(color = "black", 
+                                outlier.shape = NA, 
+                                show.legend = FALSE, 
+                                alpha = a),
+            violin.args = list(color = "black", 
+                               outlier.shape = NA, 
+                               alpha = a),
             boxplot.args.pos = list(
               position = ggpp::position_dodgenudge(x = 0, width = 0.3), width = 0.3
             ),
-            point.args = list(show.legend = FALSE, alpha = .5),
+            point.args = list(show.legend = FALSE, 
+                              alpha = .5),
             violin.args.pos = list(
-              width = 0.6, position = position_nudge(x = 0.16)),
-            point.args.pos = list(position = ggpp::position_dodgenudge(x = -0.25, width = 0.1))) +
+              width = 0.6, 
+              position = position_nudge(x = 0.16)),
+            point.args.pos = list(
+              position = ggpp::position_dodgenudge(x = -0.25, 
+                                                   width = 0.1))) +
   scale_fill_manual(values = custom.col) +
   scale_color_manual(values = custom.col) +
   #ylim(0, 10) +
-  labs(title = "Dwell times per emotion, AOI and diagnostic group", x = "", y = "dwell times (%)") +
+  labs(title = "Dwell times per emotion, AOI and diagnostic group", 
+       x = "", 
+       y = "dwell times (%)") +
   theme_bw() + 
   facet_wrap(. ~ emotion) +
-  theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5), legend.direction = "horizontal", text = element_text(size = 15))
+  theme(legend.position = "bottom", 
+        plot.title = element_text(hjust = 0.5),
+        legend.direction = "horizontal", 
+        text = element_text(size = 15))
 
 ```
 
 ## Bayes factor analysis
 
-To complement our hypothesis testing using brms::hypothesis(), we wanted to perform a Bayes Factor analysis with models excluding some of our population-level predictors. Unfortunately, we get a warning when attempting to use bridgesampling for our chosen priors. Therefore, we perform no Bayes Factor model comparison and this code section is not evaluated. 
+To complement our hypothesis testing using brms::hypothesis(), we wanted to perform a Bayes Factor analysis with models excluding some of our population-level predictors. **Unfortunately, we get a warning when attempting to use bridgesampling for our chosen priors. Therefore, we perform no Bayes Factor model comparison and this code section is not evaluated.**
 
 ```{r bf_fix, eval=F}
 
@@ -500,7 +539,8 @@ pr.descriptions = c("chosen",
 
 # check which have been run already
 if (file.exists(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)))) {
-  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F)
+  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
+                     show_col_types = F)
   # check if the chosen priors worked before
   pr.chosen = pr.done %>% filter(priors == "chosen" & 
                                    grepl("no MLL", `population-level`))
@@ -589,8 +629,10 @@ if (file.exists(file.path(cache_dir, paste0("df_res_", code, ".rds")))) {
                     bck,
                     cache_mode     = "results", 
                     cache_location = file.path(cache_dir, paste0("res_", code)))
-  saveRDS(res$stats, file = file.path(cache_dir, paste0("df_res_", code, ".rds")))
-  saveRDS(res$backend_diagnostics, file = file.path(cache_dir, paste0("df_div_", code, ".rds")))
+  saveRDS(res$stats, 
+          file = file.path(cache_dir, paste0("df_res_", code, ".rds")))
+  saveRDS(res$backend_diagnostics, 
+          file = file.path(cache_dir, paste0("df_div_", code, ".rds")))
 }
 
 ```
@@ -651,12 +693,19 @@ p3 = plot_rank_hist(df.results.b, bins = 20) + theme_bw() +
 p4 = plot_sim_estimated(df.results.b, alpha = a) + theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3)) +
   scale_y_continuous(breaks=scales::pretty_breaks(n = 3))
-p5 = plot_contraction(df.results.b, prior_sd = setNames(c(2.5, rep(1, length(unique(df.results.b$variable))-1)), unique(df.results.b$variable))) +
+p5 = plot_contraction(
+  df.results.b, 
+  prior_sd = setNames(c(2.5, 
+                        rep(1, 
+                            length(unique(df.results.b$variable))-1)), 
+                      unique(df.results.b$variable))) +
   theme_bw() +
   scale_x_continuous(breaks=scales::pretty_breaks(n = 3))
 
-p = ggarrange(p1, p2, p3, p4, p5, labels = "AUTO", ncol = 1, nrow = 5)#, heights = c(2, 5, 5, 5, 5))
-annotate_figure(p, top = text_grob("Prior predictive checks and SBC: no of saccades", face = "bold", size = 14))
+p = ggarrange(p1, p2, p3, p4, p5, labels = "AUTO", ncol = 1, nrow = 5)
+annotate_figure(p, 
+                top = text_grob("Prior predictive checks and SBC: no of saccades", 
+                face = "bold", size = 14))
 
 ```
 
@@ -711,7 +760,9 @@ p2 = ppc_stat_grouped(df.sac$n.sac, post.pred, df.sac$diagnosis) +
 
 p = ggarrange(p1, p2,
           nrow = 2, ncol = 1, labels = "AUTO")
-annotate_figure(p, top = text_grob("Posterior predictive checks: number of saccades", face = "bold", size = 14))
+annotate_figure(p, 
+                top = text_grob("Posterior predictive checks: number of saccades", 
+                face = "bold", size = 14))
 
 ```
 
@@ -770,12 +821,12 @@ h3.equ = equivalence_test(post.draws %>%
 h3.equ
 
 # explore differences between emotions
-hypothesis(m.sac, "emo1 > -emo1 - emo2 - emo3", alpha = 0.025) # fear more than sadness: *
-hypothesis(m.sac, "emo1 > emo2", alpha = 0.025) # fear more than anger: *
-hypothesis(m.sac, "emo1 < emo3", alpha = 0.025) # fear fewer than happiness
-hypothesis(m.sac, "emo2 < emo3", alpha = 0.025) # anger fewer than happiness: *
-hypothesis(m.sac, "-emo1 - emo2 - emo3 < emo3", alpha = 0.025) # sadness fewer than happiness: *
-hypothesis(m.sac, "-emo1 - emo2 - emo3 > emo2", alpha = 0.025) # sadness more than anger: *
+hypothesis(m.sac, "emo1 > -emo1 - emo2 - emo3", alpha = 0.025) # AF more than SA
+hypothesis(m.sac, "emo1 > emo2", alpha = 0.025) # AF more than AN
+hypothesis(m.sac, "emo1 < emo3", alpha = 0.025) # AF fewer than HA
+hypothesis(m.sac, "emo2 < emo3", alpha = 0.025) # AN fewer than HA
+hypothesis(m.sac, "-emo1 - emo2 - emo3 < emo3", alpha = 0.025) # SA fewer than HA
+hypothesis(m.sac, "-emo1 - emo2 - emo3 > emo2", alpha = 0.025) # SA more than AN
 
 ```
 
@@ -791,23 +842,39 @@ a = 0.66
 # rain plot
 df.sac %>%
   mutate(
-    emotion = fct_recode(emo, "fear" = "AF", "anger" = "AN", "happiness" = "HA", "sadness" = "SA")) %>%
+    emotion = fct_recode(emo, 
+                         "fear" = "AF", 
+                         "anger" = "AN", 
+                         "happiness" = "HA", 
+                         "sadness" = "SA")) %>%
   ggplot(aes(x = emotion, y = n.sac, fill = diagnosis, colour = diagnosis)) + #
   geom_rain(rain.side = 'r',
-            boxplot.args = list(color = "black", outlier.shape = NA, show.legend = FALSE, alpha = a),
-            violin.args = list(color = "black", outlier.shape = NA, alpha = a),
+            boxplot.args = list(color = "black", 
+                                outlier.shape = NA, 
+                                show.legend = FALSE, 
+                                alpha = a),
+            violin.args = list(color = "black", 
+                               outlier.shape = NA, 
+                               alpha = a),
             boxplot.args.pos = list(
               position = ggpp::position_dodgenudge(x = 0, width = 0.3), width = 0.3
             ),
             point.args = list(show.legend = FALSE, alpha = .5),
             violin.args.pos = list(
               width = 0.6, position = position_nudge(x = 0.16)),
-            point.args.pos = list(position = ggpp::position_dodgenudge(x = -0.25, width = 0.1))) +
+            point.args.pos = list(
+              position = ggpp::position_dodgenudge(x = -0.25, 
+                                                   width = 0.1))) +
   scale_fill_manual(values = custom.col) +
   scale_color_manual(values = custom.col) +
-  labs(title = "Number of saccades per emotion and diagnostic group", x = "", y = "no of saccades") +
+  labs(title = "Number of saccades per emotion and diagnostic group", 
+       x = "", 
+       y = "no of saccades") +
   theme_bw() + 
-  theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5), legend.direction = "horizontal", text = element_text(size = 15))
+  theme(legend.position = "bottom", 
+        plot.title = element_text(hjust = 0.5), 
+        legend.direction = "horizontal", 
+        text = element_text(size = 15))
 
 ```
 
@@ -829,7 +896,8 @@ pr.descriptions = c("chosen",
 
 # check which have been run already
 if (file.exists(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)))) {
-  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F) %>%
+  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
+                     show_col_types = F) %>%
     select(priors) %>% distinct()
   pr.descriptions = pr.descriptions[!(pr.descriptions %in% pr.done$priors)]
 }
@@ -856,7 +924,8 @@ for (pr.desc in pr.descriptions) {
 }
 
 # read in the results
-df.sac.bf = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), show_col_types = F)
+df.sac.bf = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
+                     show_col_types = F)
 
 # check the sensitivity analysis result per model
 # compare to main effects model as reference
@@ -874,14 +943,18 @@ df.sac.bf %>%
       T ~ 999),
     sd = fct_reorder(sd, order)
   ) %>%
-  ggplot(aes(y = bf.log, x = sd, group = `population-level`, colour = `population-level`)) + 
+  ggplot(aes(y = bf.log, 
+             x = sd, 
+             group = `population-level`, 
+             colour = `population-level`)) + 
   geom_point() +
   geom_line() + 
   geom_vline(xintercept = "1") +
   geom_hline(yintercept = 0) +
   theme_bw() +
   scale_colour_manual(values = custom.col) + 
-  theme(legend.position = c(0.2, 0.35), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+  theme(legend.position = c(0.2, 0.35), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 ```
 
@@ -890,7 +963,10 @@ When comparing priors with different standard deviations, there is a plateau wer
 ```{r bf_sac2}
 
 # create a data frame with the comparisons
-kable(df.sac.bf %>% filter(priors == "chosen" & `population-level` != "1") %>% select(-priors) %>% arrange(desc(bf.log)), digits = 3)
+kable(df.sac.bf %>% 
+        filter(priors == "chosen" & `population-level` != "1") %>% 
+        select(-priors) %>% 
+        arrange(desc(bf.log)), digits = 3)
 
 ```
 
