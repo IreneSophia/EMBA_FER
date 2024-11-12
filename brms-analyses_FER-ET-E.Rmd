@@ -367,7 +367,7 @@ p2 = plot_rank_hist(df.results.b, bins = 20) +
 p3 = plot_sim_estimated(df.results.b, alpha = 0.5) +
   theme_bw()
 p4 = plot_contraction(df.results.b, 
-         prior_sd = setNames(rep(2, length(unique(df.results.b$variable))), 
+         prior_sd = setNames(c(rep(1.5, 3), rep(1, 6)), 
    unique(df.results.b$variable))) +
   theme_bw()
 
@@ -731,7 +731,7 @@ p2 = plot_rank_hist(df.results.b, bins = 20) +
 p3 = plot_sim_estimated(df.results.b, alpha = 0.5) +
   theme_bw()
 p4 = plot_contraction(df.results.b, 
-         prior_sd = setNames(rep(2, length(unique(df.results.b$variable))), 
+         prior_sd = setNames(c(rep(2, 3), rep(1, length(unique(df.results.b$variable))-3)), 
    unique(df.results.b$variable))) +
   theme_bw()
 
