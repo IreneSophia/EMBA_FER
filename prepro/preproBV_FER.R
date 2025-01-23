@@ -54,11 +54,11 @@ df.ctr = list.files(path = dt.path, pattern = "CTR-BV_*", full.names = T) %>%
 exc1 = df.fer %>% group_by(subID) %>% summarise(acc = mean(acc)) %>% filter(acc < 2/3)
 exc2 = df.ctr %>% group_by(subID) %>% summarise(acc = mean(acc)) %>% filter(acc < 2/3)
 exc = c(as.character(exc1$subID), as.character(exc2$subID))
-print(length(exc)) # print how many have to be excluded
-write(exc, file.path(dt.path, 'FER-exc.txt'))
+print(length(unique(exc))) # print how many have to be excluded
 
 # load pilot participants and add to the list
 pilot = read_csv(file.path(dt.path, "pilot-subIDs.csv"))
+write(setdiff(exc, pilot$subID), file.path(dt.path, 'FER-exc.txt'))
 exc   = c(exc, pilot$subID)
 
 # exclude these participants
