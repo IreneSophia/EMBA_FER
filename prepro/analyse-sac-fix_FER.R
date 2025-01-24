@@ -3,15 +3,18 @@
 # setup
 library(tidyverse)
 fl.path = '/home/emba/Documents/EMBA'
-dt.path = paste(fl.path, 'BVET', sep = "/")
+dt.path  = paste(fl.path, 'BVET', sep = "/")
+dt.explo = paste(fl.path, 'BVET-explo', sep = "/")
 
 # load the data -----------------------------------------------------------
 
 # behavioural data
-df.beh = readRDS(paste(dt.path, "df_FER.RDS", sep = "/"))
+df.beh = readRDS(paste(dt.path,  "df_FER.RDS", sep = "/"))
+df.exp = readRDS(paste(dt.explo, "df_FER.RDS", sep = "/"))
 
 # fixation data
-df.fix.all = list.files(path = dt.path, pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T) %>%
+df.fix.all = c(list.files(path = dt.path,  pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T),
+               list.files(path = dt.explo, pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T))%>%
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(
@@ -77,7 +80,8 @@ df.fix = merge(df.fix, df.beh) %>%
 # saccade analysis --------------------------------------------------------
 
 # load the relevant saccade data in long format
-df.sac.all = list.files(path = dt.path, pattern = "^FER-ET.*_saccades_AOI.csv", full.names = T) %>%
+df.sac.all = c(list.files(path = dt.path,  pattern = "^FER-ET.*_saccades_AOI.csv", full.names = T),
+               list.files(path = dt.explo, pattern = "^FER-ET.*_saccades_AOI.csv", full.names = T))%>%
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(

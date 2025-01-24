@@ -8,7 +8,7 @@
 clearvars;
 
 % specify directories with filesep at the end
-dir_in  = ['/home/emba/Documents/EMBA/BVET' filesep];
+dir_in  = ['/home/emba/Documents/EMBA/BVET-explo' filesep];
 dir_vid = ['/home/emba/Documents/EMBA/VidStimProcessed' filesep];
 
 % get a list of the files

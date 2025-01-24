@@ -27,21 +27,38 @@ if exist([dir_path filesep subID '_tbl.mat'], 'file')
 
 else
 
+    % check whether one or two eyes were tracked
+    fid = fopen([dir_path filesep filename]);
+    header = textscan(fid, '%s%s%s%s',1,'Delimiter',',');
+    fclose(fid);
+
+    two_eyes = ~strcmp(header{3}{1}, 'ScreenX');
+
     % set options for reading in the data
     opts = delimitedTextImportOptions("NumVariables", 11);
     opts.DataLines = [2, Inf];
     opts.Delimiter = ",";
-    opts.VariableNames = ["timestamp", "trigger", "leftScreenX", "leftScreenY",...
-        "rightScreenX", "rightScreenY", "leftPupilMajorAxis", "leftPupilMinorAxis",...
-        "rightPupilMajorAxis", "rightPupilMinorAxis", "comment"];
-    opts.VariableTypes = ["double", "double", "double", "double", "double",...
-        "double", "double", "double", "double", "double", "string"];
+    if two_eyes
+        opts.VariableNames = ["timestamp", "trigger", "leftScreenX", "leftScreenY",...
+            "rightScreenX", "rightScreenY", "leftPupilMajorAxis", "leftPupilMinorAxis",...
+            "rightPupilMajorAxis", "rightPupilMinorAxis", "comment"];
+        opts.VariableTypes = ["double", "double", "double", "double", "double",...
+            "double", "double", "double", "double", "double", "string"];
+    else
+        opts.VariableNames = ["timestamp", "trigger", "ScreenX", "ScreenY",...
+            "PupilMajorAxis", "PupilMinorAxis", "comment"];
+        opts.VariableTypes = ["double", "double", "double", "double", "double",...
+            "double", "string"];
+    end
     
     tbl = readtable([dir_path filesep filename], opts); 
-    tbl.pupilDiameter = mean([tbl.leftPupilMajorAxis,tbl.leftPupilMinorAxis],2);
-    tbl.tracked = bitget(tbl.trigger,14-3); 
-    tbl.pupilDiameterRight = mean([tbl.rightPupilMajorAxis,tbl.rightPupilMinorAxis],2);
-    tbl.trackedRight = bitget(tbl.trigger,15-3); 
+
+    % calculate mean pupil diameter
+    if two_eyes
+        tbl.pupilDiameter = mean([tbl.leftPupilMajorAxis,tbl.leftPupilMinorAxis],2);
+    else
+        tbl.pupilDiameter = mean([tbl.PupilMajorAxis,tbl.PupilMinorAxis],2);
+    end
     
     %% add trial information
     
@@ -85,18 +102,19 @@ else
         tbl.trialEmo(idx(i,1):last)  = str2double(trl(i,4));
     
     end
-
-    % calculate 
-    tbl.pupilDiameter = mean([tbl.leftPupilMajorAxis,tbl.leftPupilMinorAxis],2);
-    tbl.tracked = bitget(tbl.trigger,14-3); 
-    tbl.pupilDiameterRight = mean([tbl.rightPupilMajorAxis,tbl.rightPupilMinorAxis],2);
-    tbl.trackedRight = bitget(tbl.trigger,15-3); 
         
     % format gaze directions as screen pixel coords for NH2010
-    tbl.xPixel = ((tbl.leftScreenX + tbl.rightScreenX)/2)*...
-        (screen_res(1)/(screen_size(1)*1000));
-    tbl.yPixel = ((tbl.leftScreenY + tbl.rightScreenY)/2)*...
-        (screen_res(2)/(screen_size(2)*1000));
+    if two_eyes
+        tbl.xPixel = ((tbl.leftScreenX + tbl.rightScreenX)/2)*...
+            (screen_res(1)/(screen_size(1)*1000));
+        tbl.yPixel = ((tbl.leftScreenY + tbl.rightScreenY)/2)*...
+            (screen_res(2)/(screen_size(2)*1000));
+    else
+        tbl.xPixel = (tbl.ScreenX)*...
+            (screen_res(1)/(screen_size(1)*1000));
+        tbl.yPixel = (tbl.ScreenY)*...
+            (screen_res(2)/(screen_size(2)*1000));
+    end
     
     % save the table
     save([dir_path filesep subID '_tbl.mat'], 'tbl');
