@@ -9,8 +9,8 @@ dt.explo = paste(fl.path, 'BVET-explo', sep = "/")
 # load the data -----------------------------------------------------------
 
 # behavioural data
-df.beh = readRDS(paste(dt.path,  "df_FER.RDS", sep = "/"))
-df.exp = readRDS(paste(dt.explo, "df_FER.RDS", sep = "/"))
+df.beh = rbind(readRDS(paste(dt.path,  "df_FER.RDS", sep = "/")),
+               readRDS(paste(dt.explo, "df_FER.RDS", sep = "/")))
 
 # fixation data
 df.fix.all = c(list.files(path = dt.path,  pattern = "^FER-ET.*_fixations_AOI.csv", full.names = T),
@@ -18,7 +18,7 @@ df.fix.all = c(list.files(path = dt.path,  pattern = "^FER-ET.*_fixations_AOI.cs
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(
-    subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_fixations_AOI.csv", "", fln)),
+    subID = gsub(".*FER-ET-(.+)_fixations.*", "\\1", fln),
     off_trialStm = as.numeric(gsub("pic_", "", off_trialStm)),
     on_trialStm  = as.numeric(gsub("pic_", "", on_trialStm))
   ) %>%
@@ -85,7 +85,7 @@ df.sac.all = c(list.files(path = dt.path,  pattern = "^FER-ET.*_saccades_AOI.csv
   setNames(nm = .) %>%
   map_df(~read_csv(., show_col_types = F), .id = "fln") %>% 
   mutate(
-    subID = gsub(paste0(dt.path,"/FER-ET-"), "", gsub("_saccades_AOI.csv", "", fln))
+    subID = gsub(".*FER-ET-(.+)_saccades.*", "\\1", fln),
   ) %>%
   rename("trl" = "on_trialNo")
 
