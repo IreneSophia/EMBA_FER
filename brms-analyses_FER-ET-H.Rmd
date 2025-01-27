@@ -1,5 +1,5 @@
 ---
-title: "S2: ET analysis with brms - preregistered hypotheses"
+title: "S2: ET analysis with brms - hypothesis-guided and explorative"
 author: "I. S. Plank"
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -66,7 +66,7 @@ source('helpers/fun_bf-sens.R')
 
 # S2.1 Introduction
 
-This R Markdown script analyses eye tracking data from the FER (facial emotion recognition) task of the EMBA project. It focuses on the assessment of preregistered hypotheses. The data was preprocessed before being read into this script. 
+This R Markdown script analyses eye tracking data from the FER (facial emotion recognition) task of the EMBA project. It focuses on the assessment of preregistered hypotheses, however, all models already include the data of the exploratory ADHD+ASD group. The data was preprocessed before being read into this script. SBCs were not rerun for four groups instead of three. 
 
 ## Some general settings
 
@@ -102,53 +102,16 @@ Again, we provide data files which we scrubbed of the subject IDs to anonymise t
 
 ```{r prep}
 
-# check if the data files exist, if not create them
-if (file.exists("FER_fix.rds") & file.exists("FER_sac.rds")) {
-  df.fix = readRDS("FER_fix.rds")
-  df.sac = readRDS("FER_sac.rds")
-} else {
-
-  # set file path
-  dt.path = '/home/emba/Documents/EMBA/BVET'
-  
-  # load the eye tracking data
-  load(file.path(dt.path, "FER_ET_data.RData"))
-  
-  # get demographic information
-  df.sub = read_csv(file.path("/home/emba/Documents/EMBA/CentraXX", "EMBA_centraXX.csv"), 
-                    show_col_types = F) %>%
-    mutate(
-      diagnosis = recode(diagnosis, "CTR" = "COMP")
-    )
-  
-  # merge data with diagnosis and then anonymise
-  df.fix = merge(df.fix, df.sub %>% select(subID, diagnosis), all.x = T) %>%
-    mutate_if(is.character, as.factor) %>%
-    mutate(
-      subID = as.factor(as.numeric(subID))
-    ) %>% select(-bias)
-  df.sac = merge(df.sac, df.sub %>% select(subID, diagnosis), all.x = T) %>%
-    mutate_if(is.character, as.factor) %>%
-    mutate(
-      subID = as.factor(as.numeric(subID))
-    ) %>% select(-bias)
-  
-  saveRDS(df.fix, "FER_fix.rds")
-  saveRDS(df.sac, "FER_sac.rds")
-  
-  # get rid of unneccessary data frames
-  rm(df.first)
-  rm(df.last)
-  rm(df.sac.all)
-
-}
+# load the data created with brm-analyses_FER.Rmd
+load("FER_data.RData")
 
 # aggregate the data > otherwise poor posterior predictive fit
 df.fix = df.fix %>%
   group_by(subID, diagnosis, emo, AOI) %>%
   summarise(
     fix.perc = mean(fix.perc, na.rm = T)
-  ) %>% ungroup()
+  ) %>% ungroup() %>%
+  mutate_if(is.character, as.factor)
 df.sac = df.sac %>%
   # add up all saccades per trial
   group_by(subID, diagnosis, emo, trl) %>%
@@ -159,35 +122,22 @@ df.sac = df.sac %>%
   group_by(subID, diagnosis, emo) %>%
   summarise(
     n.sac = mean(n.sac, na.rm = T)
-  ) %>% ungroup()
+  ) %>% ungroup() %>%
+  mutate_if(is.character, as.factor)
 
 # set and print the contrasts
 contrasts(df.fix$emo) = contr.sum(4)
 contrasts(df.fix$emo)
-contrasts(df.fix$diagnosis) = contr.sum(3)
+contrasts(df.fix$diagnosis) = contr.sum(4)
 contrasts(df.fix$diagnosis)
 contrasts(df.fix$AOI) = contr.sum(4)
 contrasts(df.fix$AOI)
 contrasts(df.sac$emo) = contr.sum(4)
 contrasts(df.sac$emo)
-contrasts(df.sac$diagnosis) = contr.sum(3)
+contrasts(df.sac$diagnosis) = contr.sum(4)
 contrasts(df.sac$diagnosis)
 
-# check how many subjects per group
-kable(merge(df.fix %>% group_by(subID, diagnosis) %>% summarise() %>% 
-  group_by(diagnosis) %>%
-  summarise(`number of subjects: fixations` = n()),
-  df.sac %>% group_by(subID, diagnosis) %>% summarise() %>% 
-  group_by(diagnosis) %>%
-  summarise(`number of subjects: saccades` = n())))
-
 ```
-
-We planned to determine the group-level effect subjects following Barr (2013). For each model, experiment specific priors were set based on previous literature or the task (see comments in the code). We use sum-coding for all our predictors.
-
-We perform prior predictive checks as proposed in Schad, Betancourt and Vasishth (2020) using the SBC package and creating `r nsim` simulations. In each simulation, parameters are simulated from the priors. Then, these parameters are used to create simulated data with the same structure as the original data. Both the true underlying parameters and the simulated data are saved. 
-
-Then, we create graphs showing the prior predictive distribution to check whether our priors fit our general expectations about the data. Next, we perform checks of computational faithfulness and model sensitivity as proposed by Schad, Betancourt and Vasishth (2020) and implemented in the SBC package. We create models for each of the simulated datasets. Then, we calculate performance metrics for each of these models, focusing on the population-level parameters. 
 
 # S2.2 Fixation durations
 
@@ -327,13 +277,13 @@ p5 = plot_contraction(
 p = ggarrange(p1, p2, p3, 
           nrow = 3, labels = "AUTO", heights = c(1, 2, 2))
 annotate_figure(p, 
-                top = text_grob("Prior predictive checks and SBC: fixation durations 1", 
+                top = text_grob("Prior predictive checks and SBC: dwell times 1", 
                 face = "bold", size = 14))
 
 p = ggarrange(p4, p5, 
           nrow = 2, labels = "AUTO")
 annotate_figure(p, 
-                top = text_grob("Prior predictive checks and SBC: fixation durations 2", 
+                top = text_grob("Prior predictive checks and SBC: dwell times 2", 
                 face = "bold", size = 14))
 
 ```
@@ -346,16 +296,19 @@ Third, we investigated the relationship between the simulated true parameters an
 
 Last, we explore the z-score and the posterior contraction of our population-level predictors. The z-score "determines the distance of the posterior mean from the true simulating parameter", while the posterior contraction "estimates how much prior uncertainty is reduced in the posterior estimation" (Schad, Betancourt and Vasisth, 2020). Both look acceptable for all population-level parameters. 
 
+## Posterior predictive checks
+
 As the next step, we fit the model and check whether the actual model exhibits any problems.
 
 ```{r postpc_fix, fig.height=14, message=T}
 
 # fit the maximal model
+set.seed(2468)
 m.fix = brm(f.fix,
             df.fix, prior = priors,
             iter = iter, warmup = warm,
             backend = "cmdstanr", threads = threading(8),
-            file = "m_fix_final",
+            file = "m_fix",
             family = "hurdle_lognormal", 
             save_pars = save_pars(all = TRUE)
             )
@@ -375,8 +328,6 @@ mcmc_trace(post.draws, regex_pars = "^b_",
 
 This model has no pathological behaviour with E-BFMI, no divergent samples and no rhats that are higher or equal to 1.01. Therefore, we go ahead and perform our posterior predictive checks. 
 
-## Posterior predictive checks
-
 ```{r postpc2_fix}
 
 # get posterior predictions
@@ -393,7 +344,7 @@ p2 = ppc_stat_grouped(df.fix$fix.perc, post.pred, df.fix$diagnosis) +
 p = ggarrange(p1, p2, 
           nrow = 2, ncol = 1, labels = "AUTO")
 annotate_figure(p, 
-                top = text_grob("Posterior predictive checks: percentage fixation durations", 
+                top = text_grob("Posterior predictive checks: dwell times", 
                 face = "bold", size = 14))
 
 ```
@@ -409,13 +360,23 @@ Now that we are convinced that we can trust our model, we have a look at the mod
 # print a summary
 summary(m.fix)
 
-# plot the posterior distributions:
-post.draws %>% 
+# get the estimates and compute groups
+df.m.fix = as_draws_df(m.fix) %>% 
   select(starts_with("b_")) %>%
   mutate(
-    b_COMP     = - b_diagnosis1 - b_diagnosis2,
+    b_COMP    = - b_diagnosis1 - b_diagnosis2 - b_diagnosis3,
     b_sadness = - b_emo1 - b_emo2 - b_emo3,
-    b_nose    = - b_AOI1 - b_AOI2 - b_AOI3
+    ASD       = b_Intercept + b_diagnosis2,
+    ADHD      = b_Intercept + b_diagnosis1,
+    COMP      = b_Intercept + b_COMP,
+    BOTH      = b_Intercept + b_diagnosis3
+  )
+
+# plot the posterior distributions
+df.m.fix %>% 
+  select(starts_with("b_")) %>%
+  mutate(
+    b_diagnosis0 = - b_diagnosis1 - b_diagnosis2 - b_diagnosis3
   ) %>%
   pivot_longer(cols = starts_with("b_"), names_to = "coef", values_to = "estimate") %>%
   subset(!startsWith(coef, "b_Int")) %>%
@@ -424,6 +385,7 @@ post.draws %>%
     coef = str_replace_all(coef, ":", " x "),
     coef = str_replace_all(coef, "diagnosis1", "ADHD"),
     coef = str_replace_all(coef, "diagnosis2", "ASD"),
+    coef = str_replace_all(coef, "diagnosis3", "ADHD+ASD"),
     coef = str_replace_all(coef, "emo1", "fear"),
     coef = str_replace_all(coef, "emo2", "anger"),
     coef = str_replace_all(coef, "emo3", "happiness"),
@@ -453,131 +415,28 @@ h2a
 h2b = hypothesis(m.fix, "0 > diagnosis2 + 2*diagnosis1")
 h2b 
 
-h2.equ = equivalence_test(post.draws %>% 
-                            mutate(`b_ADHD-COMP` = b_diagnosis2 + 2*b_diagnosis1, 
-                                   `b_ASD-COMP`  = b_diagnosis2 + 2*b_diagnosis1) %>%
-                            select(`b_ADHD-COMP`, `b_ASD-COMP`)
-                          )
-h2.equ
-
-# exploration: ASD fixate less on eyes compared to COMP
+# exploration: ASD and ADHD+ASD fixate less on eyes compared to COMP
 e1 = hypothesis(m.fix, 
-              "-1*diagnosis1 - 2*diagnosis2 - 1*diagnosis1:AOI1 - 2*diagnosis2:AOI1 > 0", 
+              "-1*diagnosis1 - 2*diagnosis2 - 1*diagnosis3 - 1*diagnosis1:AOI1 - 2*diagnosis2:AOI1 - 1*diagnosis3:AOI1 > 0", 
               alpha = 0.025)
 e1 
 
-```
-
-The models indicated no credible differences between ADHD and COMP (CI of COMP - ADHD: `r round(h2a$hypothesis$CI.Lower, 2)` to `r round(h2a$hypothesis$CI.Upper, 2)`, posterior probability = `r round(h2a$hypothesis$Post.Prob*100, 2)`%) as well as between ASD and COMP (CI of COMP - ASD: `r round(h2b$hypothesis$CI.Lower, 2)` to `r round(h2b$hypothesis$CI.Upper, 2)`, posterior probability = `r round(h2b$hypothesis$Post.Prob*100, 2)`%), in contrast to our hypotheses. Equivalence tests were undecided whether fixation durations between participants with ADHD and the comparison group  as well as between participants with ASD and the comparison group were equivalent. We also explored whether autistic participants spent less time fixating at the eyes, however, this was also not supported by the model (CI of difference: `r round(e1$hypothesis$CI.Lower, 2)` to `r round(e1$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e1$hypothesis$Post.Prob*100, 2)`%). 
-
-## Plots
-
-As a next step, we can now finally plot our data with our predictors of interest in mind. 
-
-```{r plot_fix, fig.height=7.5}
-
-a = 0.66
-# line plot
-df.fix %>%
-  mutate(
-    emotion = fct_recode(emo, 
-                         "fear" = "AF", 
-                         "anger" = "AN", 
-                         "happiness" = "HA", 
-                         "sadness" = "SA"),
-    AOI = fct_recode(AOI, "forehead" = "fore")) %>%
-  ggplot(aes(x = AOI, y = fix.perc, fill = diagnosis, colour = diagnosis)) + #
-  geom_rain(rain.side = 'r',
-            boxplot.args = list(color = "black", 
-                                outlier.shape = NA, 
-                                show.legend = FALSE, 
-                                alpha = a),
-            violin.args = list(color = "black", 
-                               outlier.shape = NA, 
-                               alpha = a),
-            boxplot.args.pos = list(
-              position = ggpp::position_dodgenudge(x = 0, width = 0.3), width = 0.3
-            ),
-            point.args = list(show.legend = FALSE, 
-                              alpha = .5),
-            violin.args.pos = list(
-              width = 0.6, 
-              position = position_nudge(x = 0.16)),
-            point.args.pos = list(
-              position = ggpp::position_dodgenudge(x = -0.25, 
-                                                   width = 0.1))) +
-  scale_fill_manual(values = custom.col) +
-  scale_color_manual(values = custom.col) +
-  #ylim(0, 10) +
-  labs(title = "Dwell times per emotion, AOI and diagnostic group", 
-       x = "", 
-       y = "dwell times (%)") +
-  theme_bw() + 
-  facet_wrap(. ~ emotion) +
-  theme(legend.position = "bottom", 
-        plot.title = element_text(hjust = 0.5),
-        legend.direction = "horizontal", 
-        text = element_text(size = 15))
+# explore differences between all groups
+e.fix_equ = 
+  equivalence_test(df.m.fix %>% 
+                     mutate(`b_ADHD-ASD`  = b_diagnosis1 - b_diagnosis2,
+                            `b_BOTH-ASD`  = b_diagnosis3 - b_diagnosis2,
+                            `b_COMP-ASD`  = -b_diagnosis1 - 2*b_diagnosis2 - b_diagnosis3,
+                            `b_BOTH-ADHD` = b_diagnosis3 - b_diagnosis2,
+                            `b_COMP-BOTH` = -b_diagnosis1 - b_diagnosis2 - 2*b_diagnosis3,
+                            `b_COMP-ADHD` = -2*b_diagnosis1 - b_diagnosis2 - b_diagnosis3
+                            ) %>% 
+                     select(contains('-')))
+e.fix_equ
 
 ```
 
-## Bayes factor analysis
-
-To complement our hypothesis testing using brms::hypothesis(), we wanted to perform a Bayes Factor analysis with models excluding some of our population-level predictors. **Unfortunately, we get a warning when attempting to use bridgesampling for our chosen priors. Therefore, we perform no Bayes Factor model comparison and this code section is not evaluated.**
-
-```{r bf_fix, eval=F}
-
-# set the directory in which to save results
-sense_dir = file.path(getwd(), "_brms_sens_cache")
-main.code = "fix"
-
-# describe priors
-pr.descriptions = c("chosen",
-  "sdx1.25",  "sdx1.5",  "sdx2",    "sdx4",   "sdx6",     "sdx8",     "sdx10", 
-  "sdx0.875", "sdx0.75", "sdx0.5", "sdx0.25", "sdx0.167", "sdx0.125", "sdx0.1"
-  )
-
-# check which have been run already
-if (file.exists(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)))) {
-  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
-                     show_col_types = F)
-  # check if the chosen priors worked before
-  pr.chosen = pr.done %>% filter(priors == "chosen" & 
-                                   grepl("no MLL", `population-level`))
-  if (nrow(pr.chosen) > 0) {
-    pr.descriptions = "chosen"
-  } else {
-    pr.done = pr.done %>%
-      select(priors) %>% distinct()
-    pr.descriptions = pr.descriptions[!(pr.descriptions %in% pr.done$priors)]
-  }
-}
-
-if (length(pr.descriptions) > 0) {
-  # fit the maximal model again > lots of iterations to allow for BF computation
-  m.fix.bf = brm(f.fix,
-              df.fix, prior = priors,
-              iter = 40000, warmup = 10000,
-              backend = "cmdstanr", threads = threading(8),
-              file = "m_fix_bf",
-              family = "hurdle_lognormal", 
-              save_pars = save_pars(all = TRUE)
-              )
-}
-
-# loop through them
-for (pr.desc in pr.descriptions) {
-  # use the function
-  bf_sens_3int(m.fix.bf, "diagnosis", "emo", "AOI", pr.desc, 
-          main.code, # prefix for all models and MLL
-          file.path(sense_dir, "log_FER_fix.txt"), # log file
-          sense_dir, # where to save the models and MLL
-          reps = 5
-          )
-}
-
-```
-
+The models indicated no credible differences between ADHD and COMP (CI of COMP - ADHD: `r round(h2a$hypothesis$CI.Lower, 2)` to `r round(h2a$hypothesis$CI.Upper, 2)`, posterior probability = `r round(h2a$hypothesis$Post.Prob*100, 2)`%) as well as between ASD and COMP (CI of COMP - ASD: `r round(h2b$hypothesis$CI.Lower, 2)` to `r round(h2b$hypothesis$CI.Upper, 2)`, posterior probability = `r round(h2b$hypothesis$Post.Prob*100, 2)`%), in contrast to our hypotheses. We also explored whether autistic participants spent less time fixating at the eyes, however, this was also not supported by the model (CI of difference: `r round(e1$hypothesis$CI.Lower, 2)` to `r round(e1$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e1$hypothesis$Post.Prob*100, 2)`%). 
 
 # S2.3 Number of saccades
 
@@ -587,7 +446,7 @@ We calculated how many saccades a participant would have made in this trial, if 
 
 First, we figure out the slopes for our group-level effect subjects. 
 
-```{r sac_grp}
+```{r grp_sac}
 
 # figure out slopes for subjects
 kable(head(df.sac %>% mutate(subID = as.numeric(subID)) %>% count(subID, emo)))
@@ -713,18 +572,21 @@ Second, we check the ranks of the parameters. If the model is unbiased, these sh
 
 Third, we investigated the relationship between the simulated true parameters and the posterior estimates. Although there are individual values diverging from the expected pattern, most parameters were recovered successfully within an uncertainty interval of alpha = 0.05. 
 
-Last, we explore the z-score and the posterior contraction of our population-level predictors. The z-score "determines the distance of the posterior mean from the true simulating parameter", while the posterior contraction "estimates how much prior uncertainty is reduced in the posterior estimation" (Schad, Betancourt and Vasisth, 2020). 
+Last, we explore the z-score and the posterior contraction of our population-level predictors. The z-score "determines the distance of the posterior mean from the true simulating parameter", while the posterior contraction "estimates how much prior uncertainty is reduced in the posterior estimation" (Schad, Betancourt and Vasisth, 2020).
+
+## Posterior predictive checks
 
 As the next step, we fit the model and check the final model.
 
 ```{r postpc_sac, fig.height=6, message=T}
 
 # fit the maximal model
+set.seed(2486)
 m.sac = brm(f.sac,
             df.sac, prior = priors,
             iter = iter, warmup = warm,
             backend = "cmdstanr", threads = threading(8),
-            file = "m_sac_final",
+            file = "m_sac",
             save_pars = save_pars(all = TRUE)
             )
 rstan::check_hmc_diagnostics(m.sac$fit)
@@ -742,8 +604,6 @@ mcmc_trace(post.draws, regex_pars = "^b_",
 ```
 
 This model has no pathological behaviour indicated by E-BFMI, no divergent samples, and no rhats that are higher or equal to 1.01. Therefore, we go ahead and perform our posterior predictive checks. 
-
-## Posterior predictive checks
 
 ```{r postpc2_sac, fig.height=6}
 
@@ -772,18 +632,26 @@ The predictions based on the model capture the data very well. Both the predicte
 
 Now that we are convinced that we can trust our model, we have a look at the model and its estimates.
 
-```{r final_sac, fig.height=6}
+```{r inf_sac, fig.height=6}
 
 # print a summary
 summary(m.sac)
 
-# plot the posterior distributions
-post.draws %>% 
+# get the estimates and compute groups
+df.m.sac = as_draws_df(m.sac) %>% 
   select(starts_with("b_")) %>%
   mutate(
-    b_COMP     = - b_diagnosis1 - b_diagnosis2,
-    b_sadness = - b_emo1 - b_emo2 - b_emo3
-  ) %>%
+    b_COMP    = - b_diagnosis1 - b_diagnosis2 - b_diagnosis3,
+    b_sadness = - b_emo1 - b_emo2 - b_emo3,
+    ASD       = b_Intercept + b_diagnosis2,
+    ADHD      = b_Intercept + b_diagnosis1,
+    COMP      = b_Intercept + b_COMP,
+    BOTH      = b_Intercept + b_diagnosis3
+  )
+
+# plot the posterior distributions
+df.m.sac %>% 
+  select(starts_with("b_")) %>%
   pivot_longer(cols = starts_with("b_"), names_to = "coef", values_to = "estimate") %>%
   subset(!startsWith(coef, "b_Int")) %>%
   mutate(
@@ -791,6 +659,7 @@ post.draws %>%
     coef = str_replace_all(coef, ":", " x "),
     coef = str_replace_all(coef, "diagnosis1", "ADHD"),
     coef = str_replace_all(coef, "diagnosis2", "ASD"),
+    coef = str_replace_all(coef, "diagnosis3", "ADHD+ASD"),
     coef = str_replace_all(coef, "emo1", "fear"),
     coef = str_replace_all(coef, "emo2", "anger"),
     coef = str_replace_all(coef, "emo3", "happiness"),
@@ -813,162 +682,19 @@ post.draws %>%
 h3 = hypothesis(m.sac, "0 > 2*diagnosis2 + diagnosis1")
 h3 
 
-h3.equ = equivalence_test(post.draws %>% 
-                            mutate(`b_ADHD-COMP` = b_diagnosis2 + 2*b_diagnosis1, 
-                                   `b_ASD-COMP`  = b_diagnosis2 + 2*b_diagnosis1) %>%
-                            select(`b_ADHD-COMP`, `b_ASD-COMP`)
-                          )
-h3.equ
-
-# explore differences between emotions
-hypothesis(m.sac, "emo1 > -emo1 - emo2 - emo3", alpha = 0.025) # AF more than SA
-hypothesis(m.sac, "emo1 > emo2", alpha = 0.025) # AF more than AN
-hypothesis(m.sac, "emo1 < emo3", alpha = 0.025) # AF fewer than HA
-hypothesis(m.sac, "emo2 < emo3", alpha = 0.025) # AN fewer than HA
-hypothesis(m.sac, "-emo1 - emo2 - emo3 < emo3", alpha = 0.025) # SA fewer than HA
-hypothesis(m.sac, "-emo1 - emo2 - emo3 > emo2", alpha = 0.025) # SA more than AN
+# explore differences between all groups
+e.sac_equ = 
+  equivalence_test(df.m.sac %>% 
+                     mutate(`b_ADHD-ASD`  = b_diagnosis1 - b_diagnosis2,
+                            `b_BOTH-ASD`  = b_diagnosis3 - b_diagnosis2,
+                            `b_COMP-ASD`  = -b_diagnosis1 - 2*b_diagnosis2 - b_diagnosis3,
+                            `b_BOTH-ADHD` = b_diagnosis3 - b_diagnosis2,
+                            `b_COMP-BOTH` = -b_diagnosis1 - b_diagnosis2 - 2*b_diagnosis3,
+                            `b_COMP-ADHD` = -2*b_diagnosis1 - b_diagnosis2 - b_diagnosis3
+                            ) %>% 
+                     select(contains('-')))
+e.sac_equ
 
 ```
 
 Furthermore, the model investigating the number of saccades between AOIs also did not reveal any credible differences between autistic and comparison participants (CI of COMP - ASD: `r round(h3$hypothesis$CI.Lower, 2)` to `r round(h3$hypothesis$CI.Upper, 2)`, posterior probability = `r round(h3$hypothesis$Post.Prob*100, 2)`%), also in contrast to our expectations. 
-
-## Plots
-
-As a next step, we can now finally plot our data with our predictors of interest in mind. 
-
-```{r plot_sac, fig.height=6}
-
-a = 0.66
-# rain plot
-df.sac %>%
-  mutate(
-    emotion = fct_recode(emo, 
-                         "fear" = "AF", 
-                         "anger" = "AN", 
-                         "happiness" = "HA", 
-                         "sadness" = "SA")) %>%
-  ggplot(aes(x = emotion, y = n.sac, fill = diagnosis, colour = diagnosis)) + #
-  geom_rain(rain.side = 'r',
-            boxplot.args = list(color = "black", 
-                                outlier.shape = NA, 
-                                show.legend = FALSE, 
-                                alpha = a),
-            violin.args = list(color = "black", 
-                               outlier.shape = NA, 
-                               alpha = a),
-            boxplot.args.pos = list(
-              position = ggpp::position_dodgenudge(x = 0, width = 0.3), width = 0.3
-            ),
-            point.args = list(show.legend = FALSE, alpha = .5),
-            violin.args.pos = list(
-              width = 0.6, position = position_nudge(x = 0.16)),
-            point.args.pos = list(
-              position = ggpp::position_dodgenudge(x = -0.25, 
-                                                   width = 0.1))) +
-  scale_fill_manual(values = custom.col) +
-  scale_color_manual(values = custom.col) +
-  labs(title = "Number of saccades per emotion and diagnostic group", 
-       x = "", 
-       y = "no of saccades") +
-  theme_bw() + 
-  theme(legend.position = "bottom", 
-        plot.title = element_text(hjust = 0.5), 
-        legend.direction = "horizontal", 
-        text = element_text(size = 15))
-
-```
-
-## Bayes factor analysis
-
-To complement our hypothesis testing using brms::hypothesis(), we perform a Bayes Factor analysis with models excluding some of our population-level predictors. 
-
-```{r bf_sac, fig.height=4, error=T}
-
-# set the directory in which to save results
-sense_dir = file.path(getwd(), "_brms_sens_cache")
-main.code = "sac"
-
-# describe priors
-pr.descriptions = c("chosen",
-  "sdx1.25",  "sdx1.5",  "sdx2",    "sdx4",   "sdx6",     "sdx8",     "sdx10", 
-  "sdx0.875", "sdx0.75", "sdx0.5", "sdx0.25", "sdx0.167", "sdx0.125", "sdx0.1"
-  )
-
-# check which have been run already
-if (file.exists(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)))) {
-  pr.done = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
-                     show_col_types = F) %>%
-    select(priors) %>% distinct()
-  pr.descriptions = pr.descriptions[!(pr.descriptions %in% pr.done$priors)]
-}
-
-if (length(pr.descriptions) > 0) {
-  # fit the maximal model again > lots of iterations to allow for BF computation
-  m.sac.bf = brm(f.sac,
-              df.sac, prior = priors,
-              iter = 40000, warmup = 10000,
-              backend = "cmdstanr", threads = threading(8),
-              file = "m_sac_bf",
-              save_pars = save_pars(all = TRUE)
-              )
-}
-
-# loop through them
-for (pr.desc in pr.descriptions) {
-  # use the function
-  bf_sens_2int(m.sac.bf, "diagnosis", "emo", pr.desc, 
-          main.code, # prefix for all models and MLL
-          file.path(sense_dir, "log_FER_sac.txt"), # log file
-          sense_dir # where to save the models and MLL
-          )
-}
-
-# read in the results
-df.sac.bf = read_csv(file.path(sense_dir, sprintf("df_%s_bf.csv", main.code)), 
-                     show_col_types = F)
-
-# check the sensitivity analysis result per model
-# compare to main effects model as reference
-df.sac.bf %>%
-  filter(`population-level` != "1") %>%
-  mutate(
-    sd = as.factor(case_when(
-      priors == "chosen" ~ "1", 
-      substr(priors, 1, 3) == "sdx" ~ gsub("sdx", "", priors),
-      T ~ priors)
-      ),
-    order = case_when(
-      priors == "chosen" ~ 1, 
-      substr(priors, 1, 3) == "sdx" ~ as.numeric(gsub("sdx", "", priors)),
-      T ~ 999),
-    sd = fct_reorder(sd, order)
-  ) %>%
-  ggplot(aes(y = bf.log, 
-             x = sd, 
-             group = `population-level`, 
-             colour = `population-level`)) + 
-  geom_point() +
-  geom_line() + 
-  geom_vline(xintercept = "1") +
-  geom_hline(yintercept = 0) +
-  theme_bw() +
-  scale_colour_manual(values = custom.col) + 
-  theme(legend.position = c(0.2, 0.35), 
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-
-```
-
-When comparing priors with different standard deviations, there is a plateau were the BFs are somewhat stable, but widening the priors ultimately leads to the intercept-model outperforming all other models. At the plateau, the model only including the main effect of emotion performs best on this dataset. 
-
-```{r bf_sac2}
-
-# create a data frame with the comparisons
-kable(df.sac.bf %>% 
-        filter(priors == "chosen" & `population-level` != "1") %>% 
-        select(-priors) %>% 
-        arrange(desc(bf.log)), digits = 3)
-
-```
-
-The comparison of the models reveals the model containing only emotion on the population-level to be the best model as measured by the BF when using our chosen priors. There is `r effectsize::interpret_bf(df.sac.bf[df.sac.bf$priors == "chosen" & df.sac.bf$"population-level" == "emo",]$bf.log, log = T)` this model compared to the intercept model (log(*BF*) = `r round(df.sac.bf[df.sac.bf$priors == "chosen" & df.sac.bf$"population-level" == "emo",]$bf.log, 3)`), since the data increased our belief in this model relative to the intercept model by `r round(exp(df.sac.bf[df.sac.bf$priors == "chosen" & df.sac.bf$"population-level" == "emo",]$bf.log))`. 
-
