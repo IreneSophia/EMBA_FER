@@ -102,13 +102,18 @@ if (all(MLL[['niter']] > iter)){
 
 # extract random effects from model
 idx = min(gregexpr(pattern ='\\(', as.character(m[["formula"]][["formula"]])[3])[[1]])
-random = substr(as.character(m[["formula"]][["formula"]])[3], idx, nchar(as.character(m[["formula"]][["formula"]])[3]))
+if (idx <= 0) {
+  random = ''
+} else {
+  random = paste0(' + ', 
+                  substr(as.character(m[["formula"]][["formula"]])[3], idx, nchar(as.character(m[["formula"]][["formula"]])[3])))
+}
 
 # extract name of dependent variable
 dvname = as.character(m[["formula"]][["formula"]][[2]])
 
 # intercept only model
-f0 = brms::bf(sprintf('%s ~ 1 + %s', dvname, random))
+f0 = brms::bf(sprintf('%s ~ 1 %s', dvname, random))
 write(sprintf("%s: %s", now(), as.character(f0)[1]), file.log, append = TRUE)
 m.0 = update(m, f0, save_pars = save_pars(all = T), 
              prior = priors %>% filter(class != "b"), 
@@ -256,13 +261,18 @@ if (all(MLL[['niter']] > iter)){
 
 # extract random effects from model
 idx = min(gregexpr(pattern ='\\(', as.character(m[["formula"]][["formula"]])[3])[[1]])
-random = substr(as.character(m[["formula"]][["formula"]])[3], idx, nchar(as.character(m[["formula"]][["formula"]])[3]))
+if (idx <= 0) {
+  random = ''
+} else {
+  random = paste0(' + ', 
+                  substr(as.character(m[["formula"]][["formula"]])[3], idx, nchar(as.character(m[["formula"]][["formula"]])[3])))
+}
 
 # extract name of dependent variable
 dvname = as.character(m[["formula"]][["formula"]])[[2]]
 
 # intercept only model
-f0 = brms::bf(sprintf('%s ~ 1 + %s', dvname, random))
+f0 = brms::bf(sprintf('%s ~ 1 %s', dvname, random))
 write(sprintf("%s: %s", now(), as.character(f0)[1]), file.log, append = TRUE)
 m.0 = update(m, f0, save_pars = save_pars(all = T), 
              prior = priors %>% filter(class != "b"), 
@@ -305,7 +315,7 @@ write(sprintf("%s * %s,%.4f,%s", pred1, pred2,
               pr.desc), file.out, append = T)
 
 # get rid of the interaction
-fi2 = brms::bf(sprintf('%s ~ %s + %s + %s', dvname, pred1, pred2, random))
+fi2 = brms::bf(sprintf('%s ~ %s + %s %s', dvname, pred1, pred2, random))
 write(sprintf("%s: %s", now(), as.character(fi2)[1]), file.log, append = TRUE)
 m.i2   = update(m, fi2, save_pars = save_pars(all = T),
                 prior = priors %>% filter(!grepl(":",coef)), 
@@ -342,7 +352,7 @@ if (div >= 0.05) {
 }
 
 # get rid of the second predictor
-fp1 = brms::bf(sprintf('%s ~ %s + %s', dvname, pred1, random))
+fp1 = brms::bf(sprintf('%s ~ %s %s', dvname, pred1, random))
 write(sprintf("%s: %s", now(), as.character(fp1)[1]), file.log, append = TRUE)
 m.p1   = update(m, fp1, save_pars = save_pars(all = T),
                 prior = priors %>% filter(!grepl(pred2,coef)), 
@@ -379,7 +389,7 @@ if (div >= 0.05) {
 }
 
 # get rid of the first predictor
-fp2 = brms::bf(sprintf('%s ~ %s + %s', dvname, pred2, random))
+fp2 = brms::bf(sprintf('%s ~ %s %s', dvname, pred2, random))
 write(sprintf("%s: %s", now(), as.character(fp2)[1]), file.log, append = TRUE)
 m.p2   = update(m, fp2, save_pars = save_pars(all = T),
                 prior = priors %>% filter(!grepl(pred1,coef)), 
@@ -521,13 +531,18 @@ if (all(MLL[['niter']] > iter)){
 
 # extract random effects from model
 idx = min(gregexpr(pattern ='\\(', as.character(m[["formula"]][["formula"]])[3])[[1]])
-random = substr(as.character(m[["formula"]][["formula"]])[3], idx, nchar(as.character(m[["formula"]][["formula"]])[3]))
+if (idx <= 0) {
+  random = ''
+} else {
+  random = paste0(' + ', 
+                  substr(as.character(m[["formula"]][["formula"]])[3], idx, nchar(as.character(m[["formula"]][["formula"]])[3])))
+}
 
 # extract dependent variable
 dvname = as.character(m[["formula"]][["formula"]])[[2]]
 
 # intercept only model
-f0 = brms::bf(sprintf('%s ~ 1 + %s', dvname, random))
+f0 = brms::bf(sprintf('%s ~ 1 %s', dvname, random))
 write(sprintf("%s:\t1", now()), file.log, append = TRUE)
 m.0 = update(m, f0, save_pars = save_pars(all = T), newdata = m.orig[["data"]],
              prior = priors %>% filter(class != "b"), 
@@ -585,7 +600,7 @@ fixed = c(
 
 for (b in 1:length(fixed)) {
   # build the formula
-  f = brms::bf(sprintf('%s ~ %s + %s', dvname, fixed[b], random))
+  f = brms::bf(sprintf('%s ~ %s %s', dvname, fixed[b], random))
   write(sprintf("%s:\t%s", now(), fixed[b]), file.log, append = TRUE)
   # update the priors
   preds = str_split(fixed[b], pattern = " \\+ ")[[1]]
@@ -735,13 +750,18 @@ if (all(MLL[['niter']] > iter)){
 
 # extract random effects from model
 idx = min(gregexpr(pattern ='\\(', as.character(m[["formula"]][["formula"]])[3])[[1]])
-random = substr(as.character(m[["formula"]][["formula"]])[3], idx, nchar(as.character(m[["formula"]][["formula"]])[3]))
+if (idx <= 0) {
+  random = ''
+} else {
+  random = paste0(' + ', 
+                  substr(as.character(m[["formula"]][["formula"]])[3], idx, nchar(as.character(m[["formula"]][["formula"]])[3])))
+}
 
 # extract name of dependent variable
 dvname = as.character(m[["formula"]][["formula"]])[[2]]
 
 # intercept only model
-f0 = brms::bf(sprintf('%s ~ 1 + %s', dvname, random))
+f0 = brms::bf(sprintf('%s ~ 1 %s', dvname, random))
 write(sprintf("%s:\t1", now()), file.log, append = TRUE)
 m.0 = update(m, f0, save_pars = save_pars(all = T), newdata = m.orig[["data"]],
              prior = priors %>% filter(class != "b"), 
@@ -808,7 +828,7 @@ fixed = c(
 
 for (b in 1:length(fixed)) {
   # build the formula
-  f = brms::bf(sprintf('%s ~ %s + %s', dvname, fixed[b], random))
+  f = brms::bf(sprintf('%s ~ %s %s', dvname, fixed[b], random))
   write(sprintf("%s:\t%s", now(), fixed[b]), file.log, append = TRUE)
   # update the priors
   preds = str_split(fixed[b], pattern = " \\+ ")[[1]]
