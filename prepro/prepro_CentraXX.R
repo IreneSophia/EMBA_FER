@@ -1,5 +1,3 @@
-# This script preprocesses the questionnaire data as downloaded from CentraXX and converts it into a data frame with the aggregated questionnaire values and demographic information. It uses the downloaded CentraXX csv file as well the CFT-norms and MWT-norms csvs. (c) Irene Sophia Plank. 
-
 # Load packages 
 library(tidyverse)
 
@@ -9,7 +7,7 @@ setwd("/home/emba/Documents/EMBA/CentraXX")
 
 # load raw data
 # columns of Interest: internalStudyMemberID, name2, code, value, section, (valueIndex), numericValue
-df = read_csv("EMOPRED_20230816.csv", show_col_types = F, locale = locale(encoding = "ISO-8859-1")) %>%
+df = read_csv("EMOPRED_20250127.csv", show_col_types = F) %>%
   select(internalStudyMemberID, date, name2, code, value, section, numericValue) %>%
   filter(internalStudyMemberID != "NEVIA_test" & !is.na(name2)) %>%
   rename("questionnaire" = "name2", 
@@ -130,7 +128,7 @@ df.demo = df %>% filter(questionnaire == "PSY_NEVIA_DEMO") %>%
                   `PSY_PIPS_Demo_Metall/metal` = "metal",
                   `PSY_NEVIA_emotiontraining` = "emoTrain",
                   `PSY_NEVIA_fallsja_4` = "emotrainDetails"),
-    item = gsub("^PSY_NEVIA_DEMO_.*", "cis", item),
+    item = gsub("^PSY_NEVIA_DEMO_Geschlechtsiden.*", "cis", item, useBytes = TRUE),
     value = gsub("^(Keine|Nein|keine).*", "0", value),
     value = gsub("^Ja", "1", value)
   )
@@ -224,7 +222,8 @@ df.sub = df.sub %>%
 
 # load csv with PIDs and IQs from other studies
 df.iqs = read_delim(file = paste("PID_iq.csv", sep = "/"), show_col_types = F) %>%
-  select(PID, MWT_iq, CFT_iq) %>% drop_na()
+  select(PID, MWT_iq, CFT_iq) %>% drop_na() %>% 
+  filter(nchar(PID) == 10)
 
 # update our df.sub with these values
 df.sub = rows_update(df.sub, df.iqs) %>%
@@ -242,14 +241,17 @@ if (nrow(df.sub %>% filter(is.na(MWT_iq))) > 0) {
 # categorise the groups and gender
 df.sub = df.sub %>%
   mutate(
+    ASD  = as.numeric(ASD),
+    ADHD = as.numeric(ADHD),
     diagnosis = as.factor(case_when(
-      ASD  == 1 ~ "ASD",
-      ADHD == 1 ~ "ADHD",
-      TRUE ~ "CTR"
+      ASD  == 1 & ADHD  == 1                ~ "BOTH",
+      ASD  == 1 & (ADHD == 0 | is.na(ADHD)) ~ "ASD",
+      ADHD == 1 & (ASD  == 0 | is.na(ASD))  ~ "ADHD",
+      TRUE ~ "COMP"
     )),
     gender_desc = gender,
     gender = as.factor(case_when(
-      grepl("männlich|male|m", gender_desc, ignore.case = TRUE) ~ "mal",
+      grepl("männlich|male|m|Geb. weiblich", gender_desc, ignore.case = TRUE) ~ "mal",
       grepl("weiblich|female|w|f", gender_desc, ignore.case = TRUE) ~"fem",
       TRUE ~ "dan")
     )
@@ -260,5 +262,31 @@ df.sub = df.sub %>%
 # check if someone has to be excluded
 nrow(df.sub %>% filter(iq <= 70))
 
+# add the ICD codes
+df.sub = df.sub %>%
+  mutate(
+    ASD.icd10 = case_when(
+      diagnosis == "COMP" | diagnosis == "ADHD" ~ '',
+      grepl(".0", ASDcode) ~ 'F84.0', # childhood
+      grepl(".1", ASDcode) ~ 'F84.1', # atypical
+      grepl(".5", ASDcode) ~ 'F84.5'  # asperger
+    )
+  ) %>% 
+  merge(.,
+        read_csv(list.files(pattern = ".*_code.csv")) %>%
+          select(subID, Code, Group),
+        all = T
+        ) %>%
+  filter(Group != "NOT") %>%
+  mutate(
+    ASD.icd10 = case_when(
+      diagnosis == "COMP" | diagnosis == "ADHD" ~ ASD.icd10,
+      !is.na(ASD.icd10) & ASD.icd10 == Code ~ ASD.icd10,
+      is.na(ASD.icd10) ~ Code,
+      T ~ ASD.icd10,
+    ),
+    cis       = if_else(as.numeric(cis)==1, "cis", "trans")
+  )
+
 # save everything
-write_csv(df.sub, file = "EMBA_centraXX.csv")
+write_csv(df.sub %>% select(-Group, -Code) %>% filter(!is.na(diagnosis)), file = "EMBA_centraXX.csv")
