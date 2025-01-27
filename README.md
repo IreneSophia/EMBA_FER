@@ -40,14 +40,14 @@ Data is shared in RDS and RData files which can be read into R. In the following
 
 This file contains the following data frames: 
 
-`df.fer`
+`df.fer` and `df.exp`
 
 * subID : anonymised participant ID
-* diagnosis: diagnostic status of this participant, either ADHD, ASD or COMP (comparison group, no psychiatric diagnoses)
-* emo : emotion portrayed in the stimulus (AF = afraid, AN = angry, HA = happy, SA = sadness)
+* diagnosis: diagnostic status of this participant, either ADHD, ASD, BOTH or COMP (comparison group, no psychiatric diagnoses)
 * trl : trial number (1 to 64)
 * video : KDEF ID and emotion of the video
 * frames : how many frames the participant viewed (max. 300)
+* emo : emotion portrayed in the stimulus (AF = afraid, AN = angry, HA = happy, SA = sadness)
 * opt : option chosen by the participant (AF = afraid, AN = angry, HA = happy, SA = sadness)
 * disc : discrimination threshold, NA if answered incorrectly, otherwise percentage of video watched
 * acc : whether the emotion was chosen correctly, i.e., opt == emo, either TRUE or FALSE
@@ -60,12 +60,11 @@ This file contains the following data frames:
 * measurement : questionnaire or socio-demographic variable
 * ADHD : mean and standard errors or counts for the gender identities for the ADHD group
 * ASD : mean and standard errors or counts for the gender identities for the ASD group
+* BOTH : mean and standard errors or counts for the gender identities for the ADHD+ASD group
 * COMP : mean and standard errors or counts for the gender identities for the COMP group
 * logBF10 : logarithmic Bayes Factor comparing the model including diagnosis to the null model
 
-as well as `df.exc` (group and number of excluded participants), `df.sht` (outcome of shapiro test for the demographic and questionnaire values) and the results of the contingency tables (`ct.full` and `ct.mf`).
-
-### `FER_fix.rds`
+`df.fix`
 
 * subID : anonymised participant ID
 * trl : trial number (1 to 64)
@@ -81,9 +80,9 @@ as well as `df.exc` (group and number of excluded participants), `df.sht` (outco
 * disc : discrimination threshold, NA if answered incorrectly, otherwise percentage of video watched
 * acc : whether the emotion was chosen correctly, i.e., opt == emo, either TRUE or FALSE
 * n.fix.total : total number of fixations of this participant over the course of the paradigm
-* diagnosis: diagnostic status of this participant, either ADHD, ASD or COMP (comparison group, no psychiatric diagnoses)
+* diagnosis: diagnostic status of this participant, either ADHD, ASD, BOTH or COMP (comparison group, no psychiatric diagnoses)
 
-### `FER_sac.rds`
+`df.sac`
 
 * subID : anonymised participant ID
 * trl : trial number (1 to 64)
@@ -96,9 +95,9 @@ as well as `df.exc` (group and number of excluded participants), `df.sht` (outco
 * disc : discrimination threshold, NA if answered incorrectly, otherwise percentage of video watched
 * acc : whether the emotion was chosen correctly, i.e., opt == emo, either TRUE or FALSE
 * n.sac.total : total number of predicted saccades of this participant over the course of the paradigm
-* diagnosis: diagnostic status of this participant, either ADHD, ASD or COMP (comparison group, no psychiatric diagnoses)
+* diagnosis: diagnostic status of this participant, either ADHD, ASD, BOTH or COMP (comparison group, no psychiatric diagnoses)
 
-### `FER_first.rds`
+`df_first`
 
 * subID : anonymised participant ID
 * trl : trial number (1 to 64)
@@ -115,7 +114,7 @@ as well as `df.exc` (group and number of excluded participants), `df.sht` (outco
 * diagnosis: diagnostic status of this participant, either ADHD, ASD or COMP (comparison group, no psychiatric diagnoses)
 * AOI.code : AOI but coded as numbers
 
-### `FER_last.rds`
+`df_last`
 
 * subID : anonymised participant ID
 * video : KDEF ID and emotion of the video
@@ -123,6 +122,8 @@ as well as `df.exc` (group and number of excluded participants), `df.sht` (outco
 * emo : emotion portrayed in the stimulus (AF = afraid, AN = angry, HA = happy, SA = sadness)
 * AOI : in which area of interest was the last fixation before stopping the video (forehead, eyes, mouth, nose)
 * AOI.code : AOI but coded as numbers
+
+as well as `df.exc` (group and number of excluded participants), `df.sht` (outcome of shapiro test for the demographic and questionnaire values), `gen.desc` (gender descriptions not on the binary male/female), `tb.gen` (table with gender, trans/cis and diagnostic group) and the results of the contingency tables (`ct.full` and `ct.mf` for only male and female participants).
 
 ## Project members
 
