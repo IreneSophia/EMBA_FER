@@ -1,0 +1,151 @@
+population-level,bf.log,priors
+1,0.0000,chosen
+diagnosis * emo + sfsr.disc,126.0407,chosen
+diagnosis,6.1320,chosen
+emo,71.3073,chosen
+sfsr.disc,33.3845,chosen
+diagnosis + emo,84.2499,chosen
+diagnosis + sfsr.disc,34.2616,chosen
+emo + sfsr.disc,136.1645,chosen
+diagnosis + emo + sfsr.disc,140.5225,chosen
+diagnosis + emo + diagnosis:emo,72.2653,chosen
+1,0.0000,sdx1.25
+diagnosis * emo + sfsr.disc,128.7679,sdx1.25
+diagnosis,6.0597,sdx1.25
+emo,74.7406,sdx1.25
+sfsr.disc,35.3677,sdx1.25
+diagnosis + emo,87.6337,sdx1.25
+diagnosis + sfsr.disc,35.6277,sdx1.25
+emo + sfsr.disc,141.4627,sdx1.25
+diagnosis + emo + sfsr.disc,145.3274,sdx1.25
+diagnosis + emo + diagnosis:emo,73.5487,sdx1.25
+1,0.0000,sdx1.5
+diagnosis * emo + sfsr.disc,129.1337,sdx1.5
+diagnosis,5.8203,sdx1.5
+emo,76.3177,sdx1.5
+sfsr.disc,36.3155,sdx1.5
+diagnosis + emo,88.9913,sdx1.5
+diagnosis + sfsr.disc,36.0589,sdx1.5
+emo + sfsr.disc,143.9606,sdx1.5
+diagnosis + emo + sfsr.disc,147.3729,sdx1.5
+diagnosis + emo + diagnosis:emo,73.2202,sdx1.5
+1,0.0000,sdx2
+diagnosis * emo + sfsr.disc,127.7038,sdx2
+diagnosis,5.2530,sdx2
+emo,77.4972,sdx2
+sfsr.disc,37.1081,sdx2
+diagnosis + emo,89.6225,sdx2
+diagnosis + sfsr.disc,36.0161,sdx2
+emo + sfsr.disc,145.9250,sdx2
+diagnosis + emo + sfsr.disc,148.5684,sdx2
+diagnosis + emo + diagnosis:emo,71.2229,sdx2
+1,0.0000,sdx4
+diagnosis * emo + sfsr.disc,119.5933,sdx4
+diagnosis,3.4436,sdx4
+emo,77.3200,sdx4
+sfsr.disc,37.4093,sdx4
+diagnosis + emo,87.6718,sdx4
+diagnosis + sfsr.disc,34.2675,sdx4
+emo + sfsr.disc,146.0752,sdx4
+diagnosis + emo + sfsr.disc,146.7250,sdx4
+diagnosis + emo + diagnosis:emo,62.9976,sdx4
+1,0.0000,sdx6
+diagnosis * emo + sfsr.disc,113.6491,sdx6
+diagnosis,2.2777,sdx6
+emo,76.4497,sdx6
+sfsr.disc,37.1844,sdx6
+diagnosis + emo,85.6408,sdx6
+diagnosis + sfsr.disc,32.8314,sdx6
+emo + sfsr.disc,144.9860,sdx6
+diagnosis + emo + sfsr.disc,144.4347,sdx6
+diagnosis + emo + diagnosis:emo,57.3111,sdx6
+1,0.0000,sdx8
+diagnosis * emo + sfsr.disc,109.2364,sdx8
+diagnosis,1.4331,sdx8
+emo,75.7095,sdx8
+sfsr.disc,36.9597,sdx8
+diagnosis + emo,84.0554,sdx8
+diagnosis + sfsr.disc,31.7463,sdx8
+emo + sfsr.disc,144.0226,sdx8
+diagnosis + emo + sfsr.disc,142.6136,sdx8
+diagnosis + emo + diagnosis:emo,53.1328,sdx8
+1,0.0000,sdx10
+diagnosis * emo + sfsr.disc,105.7539,sdx10
+diagnosis,0.7714,sdx10
+emo,75.0971,sdx10
+sfsr.disc,36.7677,sdx10
+diagnosis + emo,82.7840,sdx10
+diagnosis + sfsr.disc,30.8852,sdx10
+emo + sfsr.disc,143.2176,sdx10
+diagnosis + emo + sfsr.disc,141.1429,sdx10
+diagnosis + emo + diagnosis:emo,49.8536,sdx10
+1,0.0000,sdx0.875
+diagnosis * emo + sfsr.disc,122.5857,sdx0.875
+diagnosis,6.0124,sdx0.875
+emo,68.0509,sdx0.875
+sfsr.disc,31.5476,sdx0.875
+diagnosis + emo,80.8458,sdx0.875
+diagnosis + sfsr.disc,32.7810,sdx0.875
+emo + sfsr.disc,131.1962,sdx0.875
+diagnosis + emo + sfsr.disc,135.7985,sdx0.875
+diagnosis + emo + diagnosis:emo,70.1547,sdx0.875
+1,0.0000,sdx0.75
+diagnosis * emo + sfsr.disc,116.0979,sdx0.75
+diagnosis,5.7021,sdx0.75
+emo,62.6797,sdx0.75
+sfsr.disc,28.6089,sdx0.75
+diagnosis + emo,75.0448,sdx0.75
+diagnosis + sfsr.disc,30.2414,sdx0.75
+emo + sfsr.disc,122.9888,sdx0.75
+diagnosis + emo + sfsr.disc,127.8105,sdx0.75
+diagnosis + emo + diagnosis:emo,65.9040,sdx0.75
+1,0.0000,sdx0.5
+diagnosis * emo + sfsr.disc,79.1413,sdx0.5
+diagnosis,4.3918,sdx0.5
+emo,38.9012,sdx0.5
+sfsr.disc,17.5781,sdx0.5
+diagnosis + emo,47.2747,sdx0.5
+diagnosis + sfsr.disc,19.9821,sdx0.5
+emo + sfsr.disc,81.6422,sdx0.5
+diagnosis + emo + sfsr.disc,86.3502,sdx0.5
+diagnosis + emo + diagnosis:emo,43.0853,sdx0.5
+1,0.0000,sdx0.25
+diagnosis * emo + sfsr.disc,19.8313,sdx0.25
+diagnosis,2.2913,sdx0.25
+emo,13.9606,sdx0.25
+sfsr.disc,3.8096,sdx0.25
+diagnosis + emo,16.3793,sdx0.25
+diagnosis + sfsr.disc,5.8106,sdx0.25
+emo + sfsr.disc,18.1379,sdx0.25
+diagnosis + emo + sfsr.disc,20.2339,sdx0.25
+diagnosis + emo + diagnosis:emo,15.9913,sdx0.25
+1,0.0000,sdx0.167
+diagnosis * emo + sfsr.disc,13.8924,sdx0.167
+diagnosis,1.8192,sdx0.167
+emo,10.7564,sdx0.167
+sfsr.disc,1.4920,sdx0.167
+diagnosis + emo,12.6014,sdx0.167
+diagnosis + sfsr.disc,3.2186,sdx0.167
+emo + sfsr.disc,12.2875,sdx0.167
+diagnosis + emo + sfsr.disc,14.0365,sdx0.167
+diagnosis + emo + diagnosis:emo,12.4575,sdx0.167
+1,0.0000,sdx0.125
+diagnosis * emo + sfsr.disc,12.3527,sdx0.125
+diagnosis,1.6891,sdx0.125
+emo,9.9516,sdx0.125
+sfsr.disc,0.8143,sdx0.125
+diagnosis + emo,11.6513,sdx0.125
+diagnosis + sfsr.disc,2.4576,sdx0.125
+emo + sfsr.disc,10.7757,sdx0.125
+diagnosis + emo + sfsr.disc,12.4297,sdx0.125
+diagnosis + emo + diagnosis:emo,11.5749,sdx0.125
+1,0.0000,sdx0.1
+diagnosis * emo + sfsr.disc,11.7341,sdx0.1
+diagnosis,1.6373,sdx0.1
+emo,9.6436,sdx0.1
+sfsr.disc,0.5191,sdx0.1
+diagnosis + emo,11.2873,sdx0.1
+diagnosis + sfsr.disc,2.1287,sdx0.1
+emo + sfsr.disc,10.1667,sdx0.1
+diagnosis + emo + sfsr.disc,11.7825,sdx0.1
+diagnosis + emo + diagnosis:emo,11.2391,sdx0.1

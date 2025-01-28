@@ -1,0 +1,76 @@
+population-level,bf.log,priors
+1,0.0000,chosen
+diagnosis * emo,-8.1672,chosen
+diagnosis + emo,-2.9831,chosen
+diagnosis,-5.1559,chosen
+emo,2.5383,chosen
+1,0.0000,sdx1.25
+diagnosis * emo,-10.8086,sdx1.25
+diagnosis + emo,-3.5936,sdx1.25
+diagnosis,-5.7879,sdx1.25
+emo,2.2820,sdx1.25
+1,0.0000,sdx1.5
+diagnosis * emo,-13.2183,sdx1.5
+diagnosis + emo,-4.7751,sdx1.5
+diagnosis,-6.3717,sdx1.5
+emo,2.1046,sdx1.5
+1,0.0000,sdx2
+diagnosis * emo,-17.1369,sdx2
+diagnosis + emo,-5.9531,sdx2
+diagnosis,-7.2709,sdx2
+emo,1.6555,sdx2
+1,0.0000,sdx4
+diagnosis * emo,-26.9212,sdx4
+diagnosis + emo,-9.6997,sdx4
+diagnosis,-9.4479,sdx4
+emo,-0.2376,sdx4
+1,0.0000,sdx6
+diagnosis * emo,-32.9548,sdx6
+diagnosis + emo,-12.2982,sdx6
+diagnosis,-10.6500,sdx6
+emo,-1.4405,sdx6
+1,0.0000,sdx8
+diagnosis * emo,-37.1806,sdx8
+diagnosis + emo,-13.8120,sdx8
+diagnosis,-11.3859,sdx8
+emo,-2.2154,sdx8
+1,0.0000,sdx10
+diagnosis * emo,-40.5618,sdx10
+diagnosis + emo,-15.1923,sdx10
+diagnosis,-12.1876,sdx10
+emo,-2.8767,sdx10
+1,0.0000,sdx0.875
+diagnosis * emo,-6.7198,sdx0.875
+diagnosis + emo,-2.1795,sdx0.875
+diagnosis,-4.4521,sdx0.875
+emo,2.7050,sdx0.875
+1,0.0000,sdx0.75
+diagnosis * emo,-5.3974,sdx0.75
+diagnosis + emo,-2.1220,sdx0.75
+diagnosis,-4.1311,sdx0.75
+emo,2.5352,sdx0.75
+1,0.0000,sdx0.5
+diagnosis * emo,-2.3211,sdx0.5
+diagnosis + emo,-1.0967,sdx0.5
+diagnosis,-2.6986,sdx0.5
+emo,1.8613,sdx0.5
+1,0.0000,sdx0.25
+diagnosis * emo,0.3849,sdx0.25
+diagnosis + emo,-0.5782,sdx0.25
+diagnosis,-1.3071,sdx0.25
+emo,1.0408,sdx0.25
+1,0.0000,sdx0.167
+diagnosis * emo,0.8463,sdx0.167
+diagnosis + emo,-0.4634,sdx0.167
+diagnosis,-1.0307,sdx0.167
+emo,0.6225,sdx0.167
+1,0.0000,sdx0.125
+diagnosis * emo,0.3462,sdx0.125
+diagnosis + emo,-0.5914,sdx0.125
+diagnosis,-0.4588,sdx0.125
+emo,0.3125,sdx0.125
+1,0.0000,sdx0.1
+diagnosis * emo,0.0309,sdx0.1
+diagnosis + emo,-0.5425,sdx0.1
+diagnosis,-0.3471,sdx0.1
+emo,-0.3161,sdx0.1
