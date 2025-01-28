@@ -366,10 +366,7 @@ df.m.fix = as_draws_df(m.fix) %>%
   mutate(
     b_COMP    = - b_diagnosis1 - b_diagnosis2 - b_diagnosis3,
     b_sadness = - b_emo1 - b_emo2 - b_emo3,
-    ASD       = b_Intercept + b_diagnosis2,
-    ADHD      = b_Intercept + b_diagnosis1,
-    COMP      = b_Intercept + b_COMP,
-    BOTH      = b_Intercept + b_diagnosis3
+    b_nose    = - b_AOI1 - b_AOI2 - b_AOI3
   )
 
 # plot the posterior distributions
@@ -437,6 +434,28 @@ e.fix_equ
 ```
 
 The models indicated no credible differences between ADHD and COMP (CI of COMP - ADHD: `r round(h2a$hypothesis$CI.Lower, 2)` to `r round(h2a$hypothesis$CI.Upper, 2)`, posterior probability = `r round(h2a$hypothesis$Post.Prob*100, 2)`%) as well as between ASD and COMP (CI of COMP - ASD: `r round(h2b$hypothesis$CI.Lower, 2)` to `r round(h2b$hypothesis$CI.Upper, 2)`, posterior probability = `r round(h2b$hypothesis$Post.Prob*100, 2)`%), in contrast to our hypotheses. We also explored whether autistic participants spent less time fixating at the eyes, however, this was also not supported by the model (CI of difference: `r round(e1$hypothesis$CI.Lower, 2)` to `r round(e1$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e1$hypothesis$Post.Prob*100, 2)`%). 
+
+Now, we explore some of the other effects with regards to dwell times. 
+
+```{r final_fix2}
+
+# longer dwell times for noses
+e.nose = hypothesis(m.fix, "-AOI1 -AOI2 -AOI3 > 0", alpha = 0.025)
+e.nose
+
+# decreased dwell times for forehead
+e.fore = hypothesis(m.fix, "AOI2 < 0", alpha = 0.025)
+e.fore
+
+# more on mouth when happiness or fear
+e.mouth.ha = hypothesis(m.fix, "emo3:AOI3 > 0", alpha = 0.025)
+e.mouth.ha
+e.mouth.af = hypothesis(m.fix, "emo1:AOI3 > 0", alpha = 0.025)
+e.mouth.af
+
+```
+
+Participants dwelled more on the nose (CI: `r round(e.nose$hypothesis$CI.Lower, 2)` to `r round(e.nose$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e.nose$hypothesis$Post.Prob*100, 2)`%) and less on the forehead (CI: `r round(e.fore$hypothesis$CI.Lower, 2)` to `r round(e.fore$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e.fore$hypothesis$Post.Prob*100, 2)`%). This effect is possibly due to the nose's centrality which allows to perceive the other AOIs in the periphery while focusing on the nose. There were also differences in dwell times to the AOIs between emotions. For instance, participants dwelled more on the mouth when the emotion portrayed was either happiness (CI: `r round(e.mouth.ha$hypothesis$CI.Lower, 2)` to `r round(e.mouth.ha$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e.mouth.ha$hypothesis$Post.Prob*100, 2)`%) or fear (CI: `r round(e.mouth.af$hypothesis$CI.Lower, 2)` to `r round(e.mouth.af$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e.mouth.af$hypothesis$Post.Prob*100, 2)`%). 
 
 # S2.3 Number of saccades
 
@@ -642,11 +661,7 @@ df.m.sac = as_draws_df(m.sac) %>%
   select(starts_with("b_")) %>%
   mutate(
     b_COMP    = - b_diagnosis1 - b_diagnosis2 - b_diagnosis3,
-    b_sadness = - b_emo1 - b_emo2 - b_emo3,
-    ASD       = b_Intercept + b_diagnosis2,
-    ADHD      = b_Intercept + b_diagnosis1,
-    COMP      = b_Intercept + b_COMP,
-    BOTH      = b_Intercept + b_diagnosis3
+    b_sadness = - b_emo1 - b_emo2 - b_emo3
   )
 
 # plot the posterior distributions
@@ -698,3 +713,21 @@ e.sac_equ
 ```
 
 Furthermore, the model investigating the number of saccades between AOIs also did not reveal any credible differences between autistic and comparison participants (CI of COMP - ASD: `r round(h3$hypothesis$CI.Lower, 2)` to `r round(h3$hypothesis$CI.Upper, 2)`, posterior probability = `r round(h3$hypothesis$Post.Prob*100, 2)`%), also in contrast to our expectations. 
+
+Now, we explore some of the other effects with regards to the number pf saccades. 
+
+```{r inf_sac2}
+
+# more saccades when fear or happiness
+e.af = hypothesis(m.sac, "emo1 > 0", alpha = 0.025)
+e.af
+e.ha = hypothesis(m.sac, "emo3 > 0", alpha = 0.025)
+e.ha
+
+# fewer saccades when anger
+e.an = hypothesis(m.sac, "emo2 < 0", alpha = 0.025)
+e.an
+
+```
+
+However, number of saccades differed between the emotions portrayed, with more saccades being produced during videos portraying fear (CI: `r round(e.af$hypothesis$CI.Lower, 2)` to `r round(e.af$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e.af$hypothesis$Post.Prob*100, 2)`%) or happiness (CI: `r round(e.ha$hypothesis$CI.Lower, 2)` to `r round(e.ha$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e.ha$hypothesis$Post.Prob*100, 2)`%) and fewer during anger (CI: `r round(e.an$hypothesis$CI.Lower, 2)` to `r round(e.an$hypothesis$CI.Upper, 2)`, posterior probability = `r round(e.an$hypothesis$Post.Prob*100, 2)`%).
