@@ -48,7 +48,7 @@ df.ctr = list.files(path = dt.path, pattern = "CTR-BV_*", full.names = T) %>%
     frames = round(disc * 300), 
     disc = case_when(acc ~ disc)
     ) %>%
-  select(subID, trl, video, frames, animal, disc, acc)
+  select(subID, trl, video, frames, animal, opt, disc, acc)
 
 # who has to be excluded? 
 exc1 = df.fer %>% group_by(subID) %>% summarise(acc = mean(acc)) %>% filter(acc < 2/3)
