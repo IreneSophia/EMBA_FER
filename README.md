@@ -125,6 +125,24 @@ This file contains the following data frames:
 
 as well as `df.exc` (group and number of excluded participants), `df.sht` (outcome of shapiro test for the demographic and questionnaire values), `gen.desc` (gender descriptions not on the binary male/female), `tb.gen` (table with gender, trans/cis and diagnostic group) and the results of the contingency tables (`ct.full` and `ct.mf` for only male and female participants).
 
+## Result files
+
+All brms results are saved in RDS files which can be read into R. The following files are shared: 
+
+`m_acc.rds`: bernoulli model assessing the influence of diagnostic status and emotion as well as their interaction on accuracy. 
+
+`m_com.rds`: truncated gaussian model assessing the influence of diagnostic status, emotion and their interaction as well as discrimination threshold in the control task on emotion discrimination threshold. 
+
+`m_fer.rds`: truncated gaussian model assessing the influence of diagnostic status, emotion and their interaction on emotion discrimination threshold. 
+
+`m_first.rds`: categorical model assessing the influence of diagnostic status on the area of interest of the first fixation. 
+
+`m_fix.rds`: hurdle lognormal model assessing the influence of diagnostic status, emotion, AOI and their interactions on dwell times in percent of total fixation duration. 
+
+`m_last.rds`: categorical model assessing the influence of diagnostic status, emotion and their interaction on the area of interest of the last fixation before the video was stopped. 
+
+`m_sac.rds`: gaussian model assessing the influence of diagnostic status, emotion and their interaction on predicted number of saccades if participants had watched the full video. 
+
 ## Project members
 
 * Project lead: Irene Sophia Plank
