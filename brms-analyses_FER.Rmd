@@ -54,6 +54,35 @@ sz = 1
 # custom colour palette
 custom.col = c(c_dark_highlight, "#CC79A7", "#009E73", "#D55E00")
 
+
+# calculate visual angle: px.x should be a vector of c(width, height) in pixel
+vis_ang = function(px.x) {
+  
+  # infos on the setup
+  mm.w = 344    # monitor width in mm
+  mm.h = 215    # monitor height in mm
+  px.w = 2650   # monitor resolution: width
+  px.h = 1600   # monitor resolution: height
+  dist = 570    # viewing distance
+  
+  # convert width from screen pixel size to mm and take half
+  mm.x    = (px.x[1] / (px.w/mm.w))/2
+  
+  # convert height from screen pixel size to mm and take half
+  mm.x[2] = (px.x[2] / (px.h/mm.h))/2
+  
+  # calculate angles
+  rad.alpha    = atan(mm.x[1]/dist)
+  rad.alpha[2] = atan(mm.x[2]/dist)
+  
+  # convert to degrees and double again
+  deg.alpha    = (rad.alpha[1] / (pi/180)) * 2
+  deg.alpha[2] = (rad.alpha[2] / (pi/180)) * 2
+  
+  return(deg.alpha)
+  
+}
+
 ```
 
 <style type="text/css">
@@ -69,6 +98,8 @@ custom.col = c(c_dark_highlight, "#CC79A7", "#009E73", "#D55E00")
 This R Markdown script analyses data from the FER (facial emotion recognition) and the FSR (facial species recognition) tasks of the EMBA project. The data was preprocessed before being read into this script. 
 
 Both tasks present 5s long videos in which a neutral face either takes on an emotion or turns into the face of a different species. Subjects are asked to stop the video at the point of recognition and then choose the correct option out of four alternatives (emotions: fear, anger, happiness, sadness; species: ape, cat, dog, lion). Data contains discrimination threshold (percentage of video watched) and accuracies. 
+
+The visual angle of the faces was approximately `r round(vis_ang(c(800,1000))[1],2)` degrees wide and `r round(vis_ang(c(800,1000))[2],2)` degrees high, depending on the exact frame.
 
 ## Some general settings
 
