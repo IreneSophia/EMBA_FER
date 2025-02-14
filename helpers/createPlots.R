@@ -72,7 +72,7 @@ rbind(df.fer.agg %>%
   theme_bw() + 
   theme(legend.position = "bottom", 
         plot.title = element_text(hjust = 0.5), 
-        legend.direction = "horizontal", 
+        legend.direction = "horizontal", legend.title = element_blank(),
         text = element_text(size = 15))
 
 ggsave("discrimination.pdf",
@@ -116,7 +116,7 @@ rbind(df.fer.agg %>%
   theme_bw() + 
   theme(legend.position = "bottom", 
         plot.title = element_text(hjust = 0.5), 
-        legend.direction = "horizontal", 
+        legend.direction = "horizontal", legend.title = element_blank(), 
         text = element_text(size = 15))
 
 ggsave("accuracy.pdf",
@@ -172,7 +172,7 @@ df.fix %>%
   facet_wrap(. ~ emotion) +
   theme(legend.position = "bottom", 
         plot.title = element_text(hjust = 0.5),
-        legend.direction = "horizontal", 
+        legend.direction = "horizontal", legend.title = element_blank(), 
         text = element_text(size = 15))
 
 ggsave("dwelltimes.pdf",
@@ -227,7 +227,7 @@ df.sac %>%
        x = "", 
        y = "no of saccades") +
   theme_bw() + 
-  theme(legend.position = "bottom", 
+  theme(legend.position = "bottom", legend.title = element_blank(), 
         plot.title = element_text(hjust = 0.5), 
         legend.direction = "horizontal", 
         text = element_text(size = 15))
